@@ -1,7 +1,7 @@
 import sys
 import math
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDockWidget, QWidget, QVBoxLayout, QPushButton, QInputDialog, QLabel, QLineEdit
-from PyQt5.QtWidgets import QSlider, QColorDialog
+from PyQt5.QtWidgets import QSlider, QColorDialog, QCheckBox
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QPainter, QPen, QPainterPath
 
@@ -26,7 +26,7 @@ class Edge:
         self.name = ""
         self.from_node = from_node
         self.to_node = to_node
-        self.directional = False
+        self.directional = True
 
 class GraphWidget(QWidget):
     def __init__(self):
@@ -44,8 +44,9 @@ class GraphWidget(QWidget):
         self.nodes.append(node)
         self.update()
 
-    def add_edge(self, from_node, to_node):
+    def add_edge(self, from_node, to_node, directional=False):
         edge = Edge(from_node, to_node)
+        edge.directional = directional
         from_node.edges.append(edge)
         to_node.edges.append(edge)
         self.edges.append(edge)
@@ -67,11 +68,11 @@ class GraphWidget(QWidget):
             count = edgeCounter.get(pair, 1)
             if edge == self.selected:
                 painter.setPen(self.SelectedPen)
-                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, edgeCounter.get(pair, 0))
+                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, edgeCounter.get(pair, 0), edge)
                 #painter.drawLine(edge.from_node.pos , edge.to_node.pos )  # Adjust for the node size
                 painter.setPen(self.DefaultPen)
             else:
-                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, edgeCounter.get(pair, 0))
+                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, edgeCounter.get(pair, 0), edge)
                 #painter.drawLine(edge.from_node.pos, edge.to_node.pos )  # Adjust for the node size
             edgeCounter[pair] = count + 1
         # Draw nodes
@@ -85,24 +86,30 @@ class GraphWidget(QWidget):
             painter.drawText(int(node.pos.x() - (node.size / 2)), int(node.pos.y() - (node.size / 2)), node.name)  # Center the text
         painter.setPen(self.DefaultPen)
         
-    def draw_curved_edge(self, painter, start, end, count):
+    def draw_curved_edge(self, painter, start, end, count, edge ):
         
         
         # If this is the first edge, draw it straight
         if count == 0:
             painter.drawLine(start, end)  # Draw a straight line for the first edge
+            if edge.directional:
+                # add triangle thing here
+                None
             return
+        # Curve is a scalar for offset, where offset is determined by the number of edges between the same nodes so far
         curve = 25
+        offset = int((count)  // 2)
         # Create a QPainterPath for the curve
         path = QPainterPath()
         # Move to the starting point for the curve
         path.moveTo(start)
 
         # Calculate a control point to create a curve
+        
         if count % 2 == 0:
-            control_point = QPoint((start.x() + end.x()) // 2, (start.y() + end.y()) // 2 - curve)
+            control_point = QPoint((start.x() + end.x()) // 2, (start.y() + end.y()) // 2 - (curve * offset))
         else:
-            control_point = QPoint((start.x() + end.x()) // 2, (start.y() + end.y()) // 2 + curve)
+            control_point = QPoint((start.x() + end.x()) // 2, (start.y() + end.y()) // 2 + (curve * offset))
 
         # Draw a cubic bezier curve
         path.cubicTo(control_point, control_point, end)
@@ -147,7 +154,11 @@ class GraphWidget(QWidget):
 
     def mouseMoveEvent(self, event):
         if self.dragging_node:
-            self.dragging_node.pos = event.pos()
+            new_pos = event.pos()
+            # Ensure the node stays within the bounds of the screen
+            new_pos.setX(max(int(self.dragging_node.size /2), min(new_pos.x(), self.width()-int(self.dragging_node.size /2))))
+            new_pos.setY(max(int(self.dragging_node.size / 2), min(new_pos.y(), self.height() - int(self.dragging_node.size / 2))))
+            self.dragging_node.pos = new_pos
             self.update()
 
     def mouseReleaseEvent(self, event):
@@ -201,6 +212,9 @@ class EditMenu(QWidget):
         self.size_slider = QSlider(Qt.Horizontal)
         self.size_slider.setRange(10, 100)  # Adjust range as needed for node size
 
+        # Edge specific controls
+        self.toggleDirectionalCheckbox = QCheckBox("Directional")
+        
         # Add controls to NodeMenu
         self.NodeMenu.addWidget(self.name_label)
         self.NodeMenu.addWidget(self.name_edit)
@@ -212,6 +226,7 @@ class EditMenu(QWidget):
         self.EdgeMenu.addWidget(self.name_label)
         self.EdgeMenu.addWidget(self.name_edit)
         self.EdgeMenu.addWidget(self.color_button)
+        self.EdgeMenu.addWidget(self.toggleDirectionalCheckbox)
 
         # Add NodeMenu and EdgeMenu to the main layout
         self.layout.addLayout(self.NodeMenu)
@@ -264,6 +279,8 @@ class EditMenu(QWidget):
             # Show Edge controls
             self.show_edge_controls()
 
+            self.toggleDirectionalCheckbox.setChecked(item.directional)
+            self.toggleDirectionalCheckbox.stateChanged.connect(self.update_item)
             # Set values for Edge editing
             self.name_edit.setText(item.name)
 
@@ -299,12 +316,14 @@ class EditMenu(QWidget):
         self.color_button.show()
         self.size_label.hide()  # Edge does not need size control
         self.size_slider.hide()  # Edge does not need size control
+        self.toggleDirectionalCheckbox.show()
 
     def hide_edge_controls(self):
         # Hide all Edge controls
         self.name_label.hide()
         self.name_edit.hide()
         self.color_button.hide()
+        self.toggleDirectionalCheckbox.hide()
 
 
 
@@ -364,7 +383,7 @@ class MainWindow(QMainWindow):
 
         from_node = next(node for node in self.graph_widget.nodes if node.name == node1_name)
         to_node = next(node for node in self.graph_widget.nodes if node.name == node2_name)
-        self.graph_widget.add_edge(from_node, to_node)
+        self.graph_widget.add_edge(from_node, to_node, True)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
