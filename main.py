@@ -120,7 +120,7 @@ class GraphWidget(QWidget):
             self.selected = None
             
             for node in self.nodes:
-                if (node.pos - event.pos()).manhattanLength() < 20:
+                if (node.pos - event.pos()).manhattanLength() < int(node.size / 2):
                     # Perform action on double-click
                     self.selected = node
                     print(f"Node {node.name} was double-clicked")
