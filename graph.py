@@ -41,13 +41,15 @@ class GraphWidget(QWidget):
         for edge in self.edges:
             if edge.from_node == edge.to_node:
                 # Draw loop if the edge is a loop
+                pair = (edge.to_node, edge.from_node)
+                count = edgeCounter.get(pair, 1)
                 if edge == self.selected:
                     painter.setPen(self.SelectedPen)
-                    self.draw_loop(painter, edge.from_node.pos, edge.from_node.size)
+                    self.draw_loop(painter, edge.from_node.pos, edge.from_node.size, (1 + .1*count))
                     painter.setPen(self.DefaultPen)
                 else:
-                    self.draw_loop(painter, edge.from_node.pos, edge.from_node.size)
-                pair = (edge.to_node, edge.from_node)
+                    self.draw_loop(painter, edge.from_node.pos, edge.from_node.size,(1 + .1*count))
+                
             else:
                 #make sure pair is always in the same order
                 if(edge.from_node.pos.x() < edge.to_node.pos.x()):
@@ -104,8 +106,8 @@ class GraphWidget(QWidget):
         # Draw the path
         painter.drawPath(path)
         
-    def draw_loop(self, painter, pos, size):
-        loop_size = size * 1.2  # Adjust the loop size as needed
+    def draw_loop(self, painter, pos, size, scalar = 1):
+        loop_size = size * scalar  # Adjust the loop size as needed
         path = QPainterPath()
         path.addEllipse(pos.x(), pos.y(), loop_size, loop_size)
         painter.drawPath(path)
