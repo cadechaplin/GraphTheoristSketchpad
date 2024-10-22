@@ -1,6 +1,7 @@
 import sys
 import math
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDockWidget, QWidget, QVBoxLayout, QPushButton, QInputDialog, QLabel, QLineEdit
+from PyQt5.QtWidgets import QSlider, QColorDialog
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QPainter, QPen, QPainterPath
 
@@ -51,18 +52,28 @@ class GraphWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        edgeCounter = {}
         painter = QPainter(self)
         painter.setPen(self.DefaultPen)
 
         # Draw edges
         for edge in self.edges:
+            #make sure pair is always in the same order
+            if(edge.from_node.pos.x() < edge.to_node.pos.x()):
+                pair = (edge.from_node, edge.to_node)
+            else:
+                pair = (edge.to_node, edge.from_node)
+            
+            count = edgeCounter.get(pair, 1)
             if edge == self.selected:
                 painter.setPen(self.SelectedPen)
-                painter.drawLine(edge.from_node.pos , edge.to_node.pos )  # Adjust for the node size
+                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, edgeCounter.get(pair, 0))
+                #painter.drawLine(edge.from_node.pos , edge.to_node.pos )  # Adjust for the node size
                 painter.setPen(self.DefaultPen)
             else:
-                painter.drawLine(edge.from_node.pos, edge.to_node.pos )  # Adjust for the node size
-
+                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, edgeCounter.get(pair, 0))
+                #painter.drawLine(edge.from_node.pos, edge.to_node.pos )  # Adjust for the node size
+            edgeCounter[pair] = count + 1
         # Draw nodes
         for node in self.nodes:
             if node == self.selected:
@@ -73,6 +84,32 @@ class GraphWidget(QWidget):
             painter.drawEllipse(int(node.pos.x() - (node.size / 2)), int(node.pos.y() - (node.size / 2)), int(node.size), int(node.size))  # Center the node drawing
             painter.drawText(int(node.pos.x() - (node.size / 2)), int(node.pos.y() - (node.size / 2)), node.name)  # Center the text
         painter.setPen(self.DefaultPen)
+        
+    def draw_curved_edge(self, painter, start, end, count):
+        
+        
+        # If this is the first edge, draw it straight
+        if count == 0:
+            painter.drawLine(start, end)  # Draw a straight line for the first edge
+            return
+        curve = 25
+        # Create a QPainterPath for the curve
+        path = QPainterPath()
+        # Move to the starting point for the curve
+        path.moveTo(start)
+
+        # Calculate a control point to create a curve
+        if count % 2 == 0:
+            control_point = QPoint((start.x() + end.x()) // 2, (start.y() + end.y()) // 2 - curve)
+        else:
+            control_point = QPoint((start.x() + end.x()) // 2, (start.y() + end.y()) // 2 + curve)
+
+        # Draw a cubic bezier curve
+        path.cubicTo(control_point, control_point, end)
+
+        # Draw the path
+        painter.drawPath(path)
+        
     def is_click_near_edge(self, click_pos, edge):
         from_pos = edge.from_node.pos
         to_pos = edge.to_node.pos
@@ -142,7 +179,7 @@ class GraphWidget(QWidget):
             self.update()
             
 
-from PyQt5.QtWidgets import QSlider, QColorDialog
+
 class EditMenu(QWidget):
     def __init__(self):
         super().__init__()
@@ -150,33 +187,47 @@ class EditMenu(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
+        # Create NodeMenu and EdgeMenu layouts
+        self.NodeMenu = QVBoxLayout()
+        self.EdgeMenu = QVBoxLayout()
+
+        # Common controls
         self.name_label = QLabel("Name:")
         self.name_edit = QLineEdit()
-        self.layout.addWidget(self.name_label)
-        self.layout.addWidget(self.name_edit)
-
         self.color_button = QPushButton("Choose Color")
-        self.layout.addWidget(self.color_button)
 
+        # Node-specific controls
         self.size_label = QLabel("Size:")
         self.size_slider = QSlider(Qt.Horizontal)
         self.size_slider.setRange(10, 100)  # Adjust range as needed for node size
-        self.layout.addWidget(self.size_label)
-        self.layout.addWidget(self.size_slider)
 
-        self.color_button.clicked.connect(self.choose_color)
-        self.name_edit.textChanged.connect(self.update_name)
-        self.size_slider.valueChanged.connect(self.update_size)
+        # Add controls to NodeMenu
+        self.NodeMenu.addWidget(self.name_label)
+        self.NodeMenu.addWidget(self.name_edit)
+        self.NodeMenu.addWidget(self.color_button)
+        self.NodeMenu.addWidget(self.size_label)
+        self.NodeMenu.addWidget(self.size_slider)
+
+        # Add controls to EdgeMenu
+        self.EdgeMenu.addWidget(self.name_label)
+        self.EdgeMenu.addWidget(self.name_edit)
+        self.EdgeMenu.addWidget(self.color_button)
+
+        # Add NodeMenu and EdgeMenu to the main layout
+        self.layout.addLayout(self.NodeMenu)
+        self.layout.addLayout(self.EdgeMenu)
 
         # Initially hide all controls
-        self.name_label.hide()
-        self.name_edit.hide()
-        self.size_label.hide()
-        self.size_slider.hide()
-        self.color_button.hide()
+        self.hide_node_controls()
+        self.hide_edge_controls()
 
         # Variable to store the currently selected item (Node or Edge)
         self.selected_item = None
+
+        # Connect signals
+        self.color_button.clicked.connect(self.choose_color)
+        self.name_edit.textChanged.connect(self.update_name)
+        self.size_slider.valueChanged.connect(self.update_size)
 
     def choose_color(self):
         if self.selected_item:
@@ -202,37 +253,59 @@ class EditMenu(QWidget):
     def updateSelection(self, item):
         self.selected_item = item
         if isinstance(item, Node):
-            # Show and set values for Node editing
-            self.name_label.show()
-            self.name_edit.show()
-            self.color_button.show()
-            self.size_label.show()
-            self.size_slider.show()
+            # Show Node controls
+            self.show_node_controls()
 
+            # Set values for Node editing
             self.name_edit.setText(item.name)
             self.size_slider.setValue(item.size)
 
         elif isinstance(item, Edge):
-            # Show and set values for Edge editing (no size for edges)
-            self.name_label.show()
-            self.name_edit.show()
-            self.color_button.show()
+            # Show Edge controls
+            self.show_edge_controls()
 
+            # Set values for Edge editing
             self.name_edit.setText(item.name)
-            self.size_label.hide()
-            self.size_slider.hide()
 
         else:
             # Hide all controls when no item is selected
-            self.name_label.hide()
-            self.name_edit.hide()
-            self.size_label.hide()
-            self.size_slider.hide()
-            self.color_button.hide()
+            self.hide_node_controls()
+            self.hide_edge_controls()
 
             self.selected_item = None
 
         self.update()
+
+    def show_node_controls(self):
+        # Show all Node controls
+        self.name_label.show()
+        self.name_edit.show()
+        self.color_button.show()
+        self.size_label.show()
+        self.size_slider.show()
+
+    def hide_node_controls(self):
+        # Hide all Node controls
+        self.name_label.hide()
+        self.name_edit.hide()
+        self.color_button.hide()
+        self.size_label.hide()
+        self.size_slider.hide()
+
+    def show_edge_controls(self):
+        # Show all Edge controls
+        self.name_label.show()
+        self.name_edit.show()
+        self.color_button.show()
+        self.size_label.hide()  # Edge does not need size control
+        self.size_slider.hide()  # Edge does not need size control
+
+    def hide_edge_controls(self):
+        # Hide all Edge controls
+        self.name_label.hide()
+        self.name_edit.hide()
+        self.color_button.hide()
+
 
 
 class MainWindow(QMainWindow):
@@ -246,6 +319,7 @@ class MainWindow(QMainWindow):
 
         # Create a QDockWidget for the buttons
         dock_widget = QDockWidget("Controls", self)
+        dock_widget.setFeatures(QDockWidget.NoDockWidgetFeatures)
         button_widget = QWidget()
         button_layout = QVBoxLayout()
 
