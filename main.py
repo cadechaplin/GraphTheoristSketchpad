@@ -59,12 +59,20 @@ class GraphWidget(QWidget):
 
         # Draw edges
         for edge in self.edges:
-            #make sure pair is always in the same order
-            if(edge.from_node.pos.x() < edge.to_node.pos.x()):
-                pair = (edge.from_node, edge.to_node)
+            if edge.from_node == edge.to_node:
+                # Draw loop if the edge is a loop
+                if edge == self.selected:
+                    painter.setPen(self.SelectedPen)
+                    self.draw_loop(painter, edge.from_node.pos, edge.from_node.size)
+                    painter.setPen(self.DefaultPen)
+                else:
+                    self.draw_loop(painter, edge.from_node.pos, edge.from_node.size)
             else:
-                pair = (edge.to_node, edge.from_node)
-            
+                #make sure pair is always in the same order
+                if(edge.from_node.pos.x() < edge.to_node.pos.x()):
+                    pair = (edge.from_node, edge.to_node)
+                else:
+                    pair = (edge.to_node, edge.from_node)
             count = edgeCounter.get(pair, 1)
             if edge == self.selected:
                 painter.setPen(self.SelectedPen)
@@ -87,8 +95,6 @@ class GraphWidget(QWidget):
         painter.setPen(self.DefaultPen)
         
     def draw_curved_edge(self, painter, start, end, count, edge ):
-        
-        
         # If this is the first edge, draw it straight
         if count == 0:
             painter.drawLine(start, end)  # Draw a straight line for the first edge
@@ -117,6 +123,12 @@ class GraphWidget(QWidget):
         # Draw the path
         painter.drawPath(path)
         
+    def draw_loop(self, painter, pos, size):
+        loop_size = size * 1.2  # Adjust the loop size as needed
+        path = QPainterPath()
+        path.addEllipse(pos.x(), pos.y(), loop_size, loop_size)
+        painter.drawPath(path)
+
     def is_click_near_edge(self, click_pos, edge):
         from_pos = edge.from_node.pos
         to_pos = edge.to_node.pos
@@ -369,7 +381,7 @@ class MainWindow(QMainWindow):
         self.graph_widget.add_node(name, pos)
 
     def add_edge(self):
-        if len(self.graph_widget.nodes) < 2:
+        if len(self.graph_widget.nodes) < 1:
             return
 
         node_names = [node.name for node in self.graph_widget.nodes]
@@ -378,7 +390,7 @@ class MainWindow(QMainWindow):
             return
 
         node2_name, ok2 = QInputDialog.getItem(self, "Add Edge", "Select second node:", node_names)
-        if not ok2 or not node2_name or node1_name == node2_name:  # Prevent connecting the same node
+        if not ok2 or not node2_name:
             return
 
         from_node = next(node for node in self.graph_widget.nodes if node.name == node1_name)
