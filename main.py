@@ -101,7 +101,9 @@ class GraphWidget(QWidget):
         if event.button() == Qt.LeftButton:
             for node in self.nodes:
                 # Check if the click is near the node
-                if (node.pos - event.pos()).manhattanLength() < 20:
+                distance_squared = ((node.pos.x() - event.pos().x()) ** 2 + (node.pos.y() - event.pos().y()) ** 2) ** (1/2)
+
+                if distance_squared < int(node.size / 2):
                     self.dragging_node = node
                     self.update()  # Update to paint the selected node
                     break  # Stop checking after finding the first node
@@ -120,7 +122,8 @@ class GraphWidget(QWidget):
             self.selected = None
             
             for node in self.nodes:
-                if (node.pos - event.pos()).manhattanLength() < int(node.size / 2):
+                distance_squared = ((node.pos.x() - event.pos().x()) ** 2 + (node.pos.y() - event.pos().y()) ** 2) ** (1/2)
+                if distance_squared < int(node.size / 2):
                     # Perform action on double-click
                     self.selected = node
                     print(f"Node {node.name} was double-clicked")
