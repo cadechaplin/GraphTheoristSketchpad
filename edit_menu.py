@@ -21,6 +21,7 @@ class EditMenu(QWidget):
         self.name_label = QLabel("Name:")
         self.name_edit = QLineEdit()
         self.color_button = QPushButton("Choose Color")
+        self.delete_button = QPushButton("Delete")
 
         # Node-specific controls
         self.size_label = QLabel("Size:")
@@ -30,18 +31,22 @@ class EditMenu(QWidget):
         # Edge specific controls
         self.toggleDirectionalCheckbox = QCheckBox("Directional")
         
+        
+        
         # Add controls to NodeMenu
         self.NodeMenu.addWidget(self.name_label)
         self.NodeMenu.addWidget(self.name_edit)
         self.NodeMenu.addWidget(self.color_button)
         self.NodeMenu.addWidget(self.size_label)
         self.NodeMenu.addWidget(self.size_slider)
+        self.NodeMenu.addWidget(self.delete_button)
 
         # Add controls to EdgeMenu
         self.EdgeMenu.addWidget(self.name_label)
         self.EdgeMenu.addWidget(self.name_edit)
         self.EdgeMenu.addWidget(self.color_button)
         self.EdgeMenu.addWidget(self.toggleDirectionalCheckbox)
+        self.EdgeMenu.addWidget(self.delete_button)
 
         # Add NodeMenu and EdgeMenu to the main layout
         self.layout.addLayout(self.NodeMenu)
@@ -58,6 +63,7 @@ class EditMenu(QWidget):
         self.color_button.clicked.connect(self.choose_color)
         self.name_edit.textChanged.connect(self.update_name)
         self.size_slider.valueChanged.connect(self.update_size)
+        self.delete_button.clicked.connect(self.delete)
 
     def choose_color(self):
         if self.selected_item:
@@ -66,6 +72,10 @@ class EditMenu(QWidget):
                 self.selected_item.fill_color = color  # Assume Node and Edge both have a 'color' attribute
                 self.update_item()
 
+    def delete(self):
+        self.graph.deleteSelected()
+        return
+    
     def update_name(self, text):
         if self.selected_item:
             self.selected_item.name = text
@@ -115,6 +125,7 @@ class EditMenu(QWidget):
         self.color_button.show()
         self.size_label.show()
         self.size_slider.show()
+        self.delete_button.show()
 
     def hide_node_controls(self):
         # Hide all Node controls
@@ -123,6 +134,7 @@ class EditMenu(QWidget):
         self.color_button.hide()
         self.size_label.hide()
         self.size_slider.hide()
+        self.delete_button.hide()
 
     def show_edge_controls(self):
         # Show all Edge controls
@@ -132,6 +144,7 @@ class EditMenu(QWidget):
         self.size_label.hide()  # Edge does not need size control
         self.size_slider.hide()  # Edge does not need size control
         self.toggleDirectionalCheckbox.show()
+        self.delete_button.show()
 
     def hide_edge_controls(self):
         # Hide all Edge controls
@@ -139,3 +152,4 @@ class EditMenu(QWidget):
         self.name_edit.hide()
         self.color_button.hide()
         self.toggleDirectionalCheckbox.hide()
+        self.delete_button.hide()

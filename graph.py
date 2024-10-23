@@ -23,6 +23,19 @@ class GraphWidget(QWidget):
         node = Node(name, pos)
         self.nodes.append(node)
         self.update()
+    def deleteSelected(self):
+        if self.selected:
+            if isinstance(self.selected, Node):
+                self.nodes.remove(self.selected)
+                i = len(self.edges) - 1
+                while i > 0:
+                    if self.edges[i].from_node == self.selected or self.edges[i].to_node == self.selected:
+                        self.edges.remove(self.edges[i])
+                    i -= 1
+            elif isinstance(self.selected, Edge):
+                self.edges.remove(self.selected)
+            self.selected = None
+            self.update()
 
     def add_edge(self, from_node, to_node, directional=False):
         edge = Edge(from_node, to_node)

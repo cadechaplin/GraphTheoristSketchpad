@@ -34,6 +34,7 @@ class MainWindow(QMainWindow):
         self.EditMenu.graph = self.graph_widget
         add_node_button.clicked.connect(self.add_node)
         add_edge_button.clicked.connect(self.add_edge)
+        
 
         button_layout.addWidget(self.EditMenu)
         button_layout.addWidget(add_node_button)
