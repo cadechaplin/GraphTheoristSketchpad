@@ -73,7 +73,20 @@ class EditMenu(QWidget):
                 self.update_item()
 
     def delete(self):
-        self.graph.deleteSelected()
+        #self.graph.deleteSelected()
+        if self.selected_item:
+            if isinstance(self.selected_item, Node):
+                self.graph.nodes.remove(self.selected_item)
+                removeList = []
+                for item in self.graph.edges:
+                    if item.from_node == self.selected_item or item.to_node == self.selected_item:
+                        removeList.append(item)
+                for item in removeList:
+                    self.graph.edges.remove(item)
+            elif isinstance(self.selected_item, Edge):
+                self.graph.edges.remove(self.selected_item)
+            self.selected_item = None
+            self.update_item()
         return
     
     def update_name(self, text):
