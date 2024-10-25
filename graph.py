@@ -42,12 +42,18 @@ class GraphWidget(QWidget):
 
 
     def add_edge(self, from_node, to_node, name, directional=False):
-        existing_edge_count = 0
+        existing_edges = []
+        missing_edges = []
         for existing_edge in self.edges:
-            if existing_edge.from_node == from_node and existing_edge.to_node == to_node:
-                if existing_edge_count < existing_edge.count:
-                    existing_edge_count = existing_edge.count
-        edge = Edge(from_node, to_node, existing_edge_count+1, name)
+            if (existing_edge.from_node == from_node and existing_edge.to_node == to_node) or (existing_edge.from_node == to_node and existing_edge.to_node == from_node):
+                existing_edges.append(existing_edge.count)
+        for i in range(1, len(existing_edges) + 1):
+            if i not in existing_edges:
+                missing_edges.append(i)
+        if len(missing_edges) > 0:
+            edge = Edge(from_node, to_node, missing_edges[0])
+        else:
+            edge = Edge(from_node, to_node, len(existing_edges) + 1)
 
         edge.directional = directional
         from_node.edges.append(edge)
