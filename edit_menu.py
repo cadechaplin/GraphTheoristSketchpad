@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit
-from PyQt5.QtWidgets import QSlider, QColorDialog, QCheckBox
+from PyQt5.QtWidgets import QSlider, QColorDialog, QCheckBox, QComboBox
 from PyQt5.QtCore import Qt
 from node import Node
 from edge import Edge
@@ -16,12 +16,28 @@ class EditMenu(QWidget):
         # Create NodeMenu and EdgeMenu layouts
         self.NodeMenu = QVBoxLayout()
         self.EdgeMenu = QVBoxLayout()
+        self.selectionMenu = QVBoxLayout()
 
         # Common controls
         self.name_label = QLabel("Name:")
         self.name_edit = QLineEdit()
         self.color_button = QPushButton("Choose Color")
         self.delete_button = QPushButton("Delete")
+        
+        #selection menu controls
+        self.selection_label = QLabel("Selection:")
+        self.selection_label_Node = QLabel("Node:")
+        self.selectNode = QComboBox()
+        #self.selectNode.currentTextChanged.connect(self.onNodeSelection)
+        self.selection_label_Edge = QLabel("Edge:")
+        self.selectEdge = QComboBox()
+        #self.selectEdge.currentTextChanged.connect(self.onEdgeSelection)
+        
+        self.selectionMenu.addWidget(self.selection_label)
+        self.selectionMenu.addWidget(self.selection_label_Node)
+        self.selectionMenu.addWidget(self.selectNode)
+        self.selectionMenu.addWidget(self.selection_label_Edge)
+        self.selectionMenu.addWidget(self.selectEdge)
 
         # Node-specific controls
         self.size_label = QLabel("Size:")
@@ -48,9 +64,11 @@ class EditMenu(QWidget):
         self.EdgeMenu.addWidget(self.toggleDirectionalCheckbox)
         self.EdgeMenu.addWidget(self.delete_button)
 
-        # Add NodeMenu and EdgeMenu to the main layout
+        # Add layouts to the main layout
+        self.layout.addLayout(self.selectionMenu)
         self.layout.addLayout(self.NodeMenu)
         self.layout.addLayout(self.EdgeMenu)
+        
 
         # Initially hide all controls
         self.hide_node_controls()
@@ -72,6 +90,55 @@ class EditMenu(QWidget):
                 self.selected_item.fill_color = color  # Assume Node and Edge both have a 'color' attribute
                 self.update_item()
 
+    def bind_graph(self, graph):
+        self.graph = graph
+        graph.SelectionChanged.update.append(self.updateSelectionMenu)
+        graph.anythingChanged.update.append(self.updateSelectionMenu)
+        
+        
+        
+    
+    def updateSelectionMenu(self):
+        self.selectNode.clear()
+        self.selectEdge.clear()
+        
+        self.selectNode.addItem("None")
+        for node in self.graph.nodes:
+            self.selectNode.addItem(node.name)
+        self.selectEdge.addItem("None")
+        for edge in self.graph.edges:
+            self.selectEdge.addItem(edge.name)
+        if self.graph.selected:
+            if isinstance(self.graph.selected, Node):
+                self.selectNode.setCurrentText(self.graph.selected.name)
+                
+            elif isinstance(self.graph.selected, Edge):
+                self.selectEdge.setCurrentText(self.graph.selected.name)
+        
+    def onNodeSelection(self, text):
+        if text == "None":
+            self.graph.selected = None
+        else:
+            for node in self.graph.nodes:
+                if node.name == text:
+                    self.graph.selected = node
+                    break
+        self.updateSelection(self.graph.selected)
+        
+        self.graph.SelectionChanged.trigger()
+        
+    def onEdgeSelection(self, text):
+        if text == "None":
+            self.graph.selected = None
+        else:
+            for edge in self.graph.edges:
+                if edge.name == text:
+                    self.graph.selected = edge
+                    break
+        self.updateSelection(self.graph.selected)
+        
+        self.graph.SelectionChanged.trigger()
+        
     def delete(self):
         #self.graph.deleteSelected()
         if self.selected_item:

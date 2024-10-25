@@ -18,10 +18,12 @@ class GraphWidget(QWidget):
         self.DefaultPen = QPen(Qt.black, 2)
         self.SelectedPen = QPen(Qt.red, 2)
         self.SelectionChanged = Event()
+        self.anythingChanged = Event()
 
     def add_node(self, name, pos):
         node = Node(name, pos)
         self.nodes.append(node)
+        self.anythingChanged.trigger()  
         self.update()
     def deleteSelected(self):
         if self.selected:
@@ -35,7 +37,10 @@ class GraphWidget(QWidget):
             elif isinstance(self.selected, Edge):
                 self.edges.remove(self.selected)
             self.selected = None
+            
             self.update()
+        
+        self.anythingChanged.trigger()  
 
     def add_edge(self, from_node, to_node, directional=False):
         edge = Edge(from_node, to_node)
@@ -44,6 +49,8 @@ class GraphWidget(QWidget):
         to_node.edges.append(edge)
         self.edges.append(edge)
         self.update()
+
+        self.anythingChanged.trigger()  
 
     def paintEvent(self, event):
         edgeCounter = {}

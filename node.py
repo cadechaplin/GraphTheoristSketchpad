@@ -7,4 +7,6 @@ class Node:
         self.edges = []
         self.size = 40
         self.fill_color = Qt.lightGray
+    def getRadius(self):
+        return self.size / 2
      

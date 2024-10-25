@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         add_node_button = QPushButton("Add Node")
         add_edge_button = QPushButton("Add Edge")
         self.EditMenu = EditMenu()  # Save reference to node edit menu
-        self.EditMenu.graph = self.graph_widget
+        self.EditMenu.bind_graph(self.graph_widget)
         add_node_button.clicked.connect(self.add_node)
         add_edge_button.clicked.connect(self.add_edge)
         
