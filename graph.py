@@ -18,12 +18,10 @@ class GraphWidget(QWidget):
         self.DefaultPen = QPen(Qt.black, 2)
         self.SelectedPen = QPen(Qt.red, 2)
         self.SelectionChanged = Event()
-        self.anythingChanged = Event()
 
     def add_node(self, name, pos):
         node = Node(name, pos)
         self.nodes.append(node)
-        self.anythingChanged.trigger()  
         self.update()
     def deleteSelected(self):
         if self.selected:
@@ -40,7 +38,6 @@ class GraphWidget(QWidget):
             
             self.update()
         
-        self.anythingChanged.trigger()  
 
     def add_edge(self, from_node, to_node, directional=False):
         edge = Edge(from_node, to_node)
@@ -50,7 +47,6 @@ class GraphWidget(QWidget):
         self.edges.append(edge)
         self.update()
 
-        self.anythingChanged.trigger()  
 
     def paintEvent(self, event):
         edgeCounter = {}
@@ -210,11 +206,11 @@ class GraphWidget(QWidget):
         
             for edge in self.edges:
                 if self.is_click_near_edge(event.pos(), edge):
+                    
                     self.selected = edge
                     print(f"Edge from {edge.from_node.name} to {edge.to_node.name} was double-clicked")
                     self.SelectionChanged.trigger()
                     self.update()
                     return
-            self.SelectionChanged.trigger()
-            self.update()
+            
             
