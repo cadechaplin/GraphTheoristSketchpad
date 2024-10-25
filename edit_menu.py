@@ -169,6 +169,7 @@ class EditMenu(QWidget):
                 self.graph.edges.remove(self.selected_item)
             self.selected_item = None
             self.update_item()
+            self.updateSelectionMenu()
         return
     
     def update_name(self, text):
