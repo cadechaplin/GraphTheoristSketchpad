@@ -50,6 +50,10 @@ class Node(QGraphicsItem):
     def boundingRect(self):
         return QRectF(-self.size / 2, -self.size / 2, self.size, self.size)
 
+    def shape(self):
+        path = QPainterPath()
+        path.addEllipse(self.boundingRect())
+        return path
     def paint(self, painter, option, widget):
         # Draw the node
         painter.setBrush(QBrush(Qt.blue))
@@ -57,7 +61,7 @@ class Node(QGraphicsItem):
 
         # Draw the bounding rectangle
         painter.setPen(QPen(Qt.red, 1, Qt.DashLine))
-        painter.drawRect(self.boundingRect())
+        painter.drawPath(self.shape())
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -71,46 +75,6 @@ class Node(QGraphicsItem):
         print(f"Hover leave on node {self.name}")
         self.update()
 
-class Edge(QGraphicsItem):
-    def __init__(self, name, from_node, to_node):
-        super(Edge, self).__init__()
-        self.name = name
-        self.from_node = from_node
-        self.to_node = to_node
-        self.setZValue(-1)  # Ensure edges are drawn behind nodes
-        self.setAcceptHoverEvents(True)  # Enable hover events
-
-    def boundingRect(self):
-        return QRectF(self.from_node.pos(), self.to_node.pos()).normalized().adjusted(-2, -2, 2, 2)
-
-    def shape(self):
-        path = QPainterPath()
-        path.moveTo(self.from_node.pos())
-        path.lineTo(self.to_node.pos())
-        stroker = QPainterPathStroker()
-        stroker.setWidth(4)  # Set the width of the hitbox
-        return stroker.createStroke(path)
-
-    def paint(self, painter, option, widget):
-        # Draw the edge
-        painter.setPen(QPen(Qt.black, 2))
-        painter.drawLine(self.from_node.pos(), self.to_node.pos())
-
-        # Draw the shape used for hit detection
-        painter.setPen(QPen(Qt.red, 1, Qt.DashLine))
-        painter.drawPath(self.shape())
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            print(f"{self.name} from {self.from_node.name} to {self.to_node.name} clicked")
-
-    def hoverEnterEvent(self, event):
-        print(f"Hover enter on edge {self.name}")
-        self.update()
-
-    def hoverLeaveEvent(self, event):
-        print(f"Hover leave on edge {self.name}")
-        self.update()
 
 class CurvedEdge(QGraphicsItem):
     def __init__(self, name, from_node, to_node, control_point):
@@ -176,8 +140,6 @@ class GraphWidget(QGraphicsView):
     def add_edge(self, name, from_node, to_node, control_point=None):
         if control_point:
             edge = CurvedEdge(name, from_node, to_node, control_point)
-        else:
-            edge = Edge(name, from_node, to_node)
         self.edges.append(edge)
         self.scene.addItem(edge)
 
@@ -191,8 +153,8 @@ if __name__ == "__main__":
         graph_widget.nodes[0],
         graph_widget.nodes[1],
         control_point=QPoint(
-            int(graph_widget.nodes[0].pos().x() - graph_widget.nodes[1].pos().x()),
-            int(graph_widget.nodes[0].pos().y() - graph_widget.nodes[1].pos().y())
+            int(100),
+            int(100)
         )
     )
     graph_widget.add_edge("curved edge", graph_widget.nodes[1], graph_widget.nodes[0], control_point=QPoint(100, 0))
