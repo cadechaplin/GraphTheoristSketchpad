@@ -146,12 +146,26 @@ class GraphWidget(QWidget):
         from_pos = edge.from_node.pos
         to_pos = edge.to_node.pos
 
-        # Calculate the distance from click_pos to the line segment (from_pos, to_pos)
-        distance = self.point_to_line_distance(from_pos, to_pos, click_pos)
-        print(distance) # Debugging
-        # Define a threshold for the maximum distance from the edge to be considered "selected"
-        threshold = 3  # Adjust this value as needed
-        return distance < threshold
+        if (edge.count == 1):
+            # Calculate the distance from click_pos to the line segment (from_pos, to_pos)
+            distance = self.point_to_line_distance(from_pos, to_pos, click_pos)
+            print(distance) # Debugging
+            # Define a threshold for the maximum distance from the edge to be considered "selected"
+            threshold = 3  # Adjust this value as needed
+            return distance < threshold
+        else:
+            # Calculate the distance from click_pos to the curve
+            curve = 25
+            offset = int((edge.count)  // 2)
+            if edge.count % 2 == 0:
+                control_point = QPoint((from_pos.x() + to_pos.x()) // 2, (from_pos.y() + to_pos.y()) // 2 - (curve * offset))
+            else:
+                control_point = QPoint((from_pos.x() + to_pos.x()) // 2, (from_pos.y() + to_pos.y()) // 2 + (curve * offset))
+            distance = self.point_to_line_distance(from_pos, control_point, click_pos)
+            distance2 = self.point_to_line_distance(control_point, to_pos, click_pos)
+            
+            print(distance, distance2)  # Debugging
+            return distance < 3 or distance2 < 3
 
     def is_click_near_loop(self, click_pos, edge):
         from_pos = edge.from_node.pos
