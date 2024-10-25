@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
         self.node_counter += 1
         pos = QPoint(100 + len(self.graph_widget.nodes) * 50, 300)
         self.graph_widget.add_node(name, pos)
-        self.EditMenu.updateSelection(None)
+        self.EditMenu.updateSelectionMenu()
 
     def add_edge(self):
         if len(self.graph_widget.nodes) < 1:
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
         
         self.graph_widget.add_edge(from_node, to_node, "edge " + str(self.edge_counter), True)
         self.edge_counter += 1
-        self.EditMenu.updateSelection(None)
+        self.EditMenu.updateSelectionMenu()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
