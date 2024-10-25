@@ -43,7 +43,12 @@ class GraphWidget(QWidget):
         self.anythingChanged.trigger()  
 
     def add_edge(self, from_node, to_node, directional=False):
-        edge = Edge(from_node, to_node)
+        existing_edge_count = 0
+        for existing_edge in self.edges:
+            if existing_edge.from_node == from_node and existing_edge.to_node == to_node:
+                if existing_edge_count < existing_edge.count:
+                    existing_edge_count = existing_edge.count
+        edge = Edge(from_node, to_node, existing_edge_count+1)
         edge.directional = directional
         from_node.edges.append(edge)
         to_node.edges.append(edge)
@@ -53,7 +58,6 @@ class GraphWidget(QWidget):
         self.anythingChanged.trigger()  
 
     def paintEvent(self, event):
-        edgeCounter = {}
         painter = QPainter(self)
         painter.setPen(self.DefaultPen)
 
@@ -62,7 +66,7 @@ class GraphWidget(QWidget):
             if edge.from_node == edge.to_node:
                 # Draw loop if the edge is a loop
                 pair = (edge.to_node, edge.from_node)
-                count = edgeCounter.get(pair, 1)
+                count = edge.count
                 if edge == self.selected:
                     painter.setPen(self.SelectedPen)
                     self.draw_loop(painter, edge.from_node.pos, edge.from_node.size, (1 + .1*count))
@@ -76,16 +80,15 @@ class GraphWidget(QWidget):
                     pair = (edge.from_node, edge.to_node)
                 else:
                     pair = (edge.to_node, edge.from_node)
-            count = edgeCounter.get(pair, 1)
+            count = edge.count
             if edge == self.selected:
                 painter.setPen(self.SelectedPen)
-                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, edgeCounter.get(pair, 0), edge)
+                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, count, edge)
                 #painter.drawLine(edge.from_node.pos , edge.to_node.pos )  # Adjust for the node size
                 painter.setPen(self.DefaultPen)
             else:
-                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, edgeCounter.get(pair, 0), edge)
+                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, count, edge)
                 #painter.drawLine(edge.from_node.pos, edge.to_node.pos )  # Adjust for the node size
-            edgeCounter[pair] = count + 1
         # Draw nodes
         for node in self.nodes:
             if node == self.selected:
@@ -148,7 +151,7 @@ class GraphWidget(QWidget):
     def is_click_near_loop(self, click_pos, edge):
         from_pos = edge.from_node.pos
         size = edge.from_node.size
-        loop_size = (size * 1.1)
+        loop_size = (size * (1 + .1 * edge.count))
         loop_pos = QPoint(int(from_pos.x() + loop_size/2), int(from_pos.y() + loop_size / 2))
         x_distance = abs(click_pos.x() - loop_pos.x())
         y_distance = abs(click_pos.y() - loop_pos.y())
@@ -211,7 +214,7 @@ class GraphWidget(QWidget):
             for edge in self.edges:
                 if self.is_click_near_edge(event.pos(), edge):
                     self.selected = edge
-                    print(f"Edge from {edge.from_node.name} to {edge.to_node.name} was double-clicked")
+                    print(f"Edge {edge.count} from {edge.from_node.name} to {edge.to_node.name} was double-clicked")
                     self.SelectionChanged.trigger()
                     self.update()
                     return
