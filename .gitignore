@@ -160,3 +160,13 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+/.vs/GraphTheoristSketchpad/copilot-chat/086a6a4b/sessions
+/.vs/GraphTheoristSketchpad/CopilotIndices/0.2.1657.32929
+/.vs/GraphTheoristSketchpad/FileContentIndex
+/.vs/ProjectSettings.json
+/.vs/PythonSettings.json
+/.vs/slnx.sqlite
+/.vs/VSWorkspaceState.json
+/.vs/GraphTheoristSketchpad/v17/.wsuo
+/.vs/GraphTheoristSketchpad/v17/DocumentLayout.backup.json
+/.vs/GraphTheoristSketchpad/v17/DocumentLayout.json
