@@ -65,7 +65,7 @@ class MainWindow(QMainWindow):
         from_node = next(node for node in self.graph_widget.nodes if node.name == node1_name)
         to_node = next(node for node in self.graph_widget.nodes if node.name == node2_name)
         
-        self.graph_widget.add_edge(from_node, to_node, True, "edge " + str(self.edge_counter))
+        self.graph_widget.add_edge(from_node, to_node, "edge " + str(self.edge_counter), True)
         self.edge_counter += 1
         self.EditMenu.updateSelection(None)
 

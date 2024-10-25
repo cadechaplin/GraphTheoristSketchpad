@@ -41,13 +41,13 @@ class GraphWidget(QWidget):
         
 
 
-    def add_edge(self, from_node, to_node, directional=False):
+    def add_edge(self, from_node, to_node, name, directional=False):
         existing_edge_count = 0
         for existing_edge in self.edges:
             if existing_edge.from_node == from_node and existing_edge.to_node == to_node:
                 if existing_edge_count < existing_edge.count:
                     existing_edge_count = existing_edge.count
-        edge = Edge(from_node, to_node, existing_edge_count+1)
+        edge = Edge(from_node, to_node, existing_edge_count+1, name)
 
         edge.directional = directional
         from_node.edges.append(edge)
