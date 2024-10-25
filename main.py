@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, dock_widget)
         self.graph_widget.SelectionChanged.update.append(self.updateSelection)
         self.node_counter = 1  # Initialize node counter
+        self.edge_counter = 1  # Initialize edge counter
         
     def updateSelection(self):
         self.EditMenu.updateSelection(self.graph_widget.selected)
@@ -46,6 +47,7 @@ class MainWindow(QMainWindow):
         self.node_counter += 1
         pos = QPoint(100 + len(self.graph_widget.nodes) * 50, 300)
         self.graph_widget.add_node(name, pos)
+        self.EditMenu.updateSelection(None)
 
     def add_edge(self):
         if len(self.graph_widget.nodes) < 1:
@@ -62,7 +64,10 @@ class MainWindow(QMainWindow):
 
         from_node = next(node for node in self.graph_widget.nodes if node.name == node1_name)
         to_node = next(node for node in self.graph_widget.nodes if node.name == node2_name)
-        self.graph_widget.add_edge(from_node, to_node, True)
+        
+        self.graph_widget.add_edge(from_node, to_node, True, "edge " + str(self.edge_counter))
+        self.edge_counter += 1
+        self.EditMenu.updateSelection(None)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

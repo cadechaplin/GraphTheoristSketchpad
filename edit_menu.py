@@ -131,24 +131,24 @@ class EditMenu(QWidget):
                 self.graph.selected = node
                 break
             
-        self.selectEdge.blockSignals(False)
-        self.selectEdge.setCurrentText("None")
         self.selectEdge.blockSignals(True)
+        self.selectEdge.setCurrentText("None")
+        self.selectEdge.blockSignals(False)
         
         self.updateSelection(self.graph.selected)
         
         self.graph.update()
         
-    def onEdgeSelection(self, text = None ):
+    def onEdgeSelection(self, text = None):
         
         for edge in self.graph.edges:
                 if edge.name == text:
                     self.graph.selected = edge
                     break
         
-        self.selectNode.blockSignals(False)
-        self.selectNode.setCurrentText("None")
         self.selectNode.blockSignals(True)
+        self.selectNode.setCurrentText("None")
+        self.selectNode.blockSignals(False)
         
         self.updateSelection(self.graph.selected)
         

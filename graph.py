@@ -23,6 +23,7 @@ class GraphWidget(QWidget):
         node = Node(name, pos)
         self.nodes.append(node)
         self.update()
+    
     def deleteSelected(self):
         if self.selected:
             if isinstance(self.selected, Node):
@@ -39,8 +40,8 @@ class GraphWidget(QWidget):
             self.update()
         
 
-    def add_edge(self, from_node, to_node, directional=False):
-        edge = Edge(from_node, to_node)
+    def add_edge(self, from_node, to_node, directional=False, name=""):
+        edge = Edge(from_node, to_node, name)
         edge.directional = directional
         from_node.edges.append(edge)
         to_node.edges.append(edge)
@@ -193,6 +194,7 @@ class GraphWidget(QWidget):
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.selected = None
+            self.update()
             
             for node in self.nodes:
                 distance_squared = ((node.pos.x() - event.pos().x()) ** 2 + (node.pos.y() - event.pos().y()) ** 2) ** (1/2)
