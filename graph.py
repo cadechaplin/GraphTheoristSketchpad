@@ -3,7 +3,7 @@
 import math
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QPainter, QPen, QPainterPath
+from PyQt5.QtGui import QColor, QPainter, QPen, QPainterPath
 from events import Event
 from node import Node
 from edge import Edge
@@ -17,6 +17,7 @@ class GraphWidget(QWidget):
         self.selected = None
         self.DefaultPen = QPen(Qt.black, 2)
         self.SelectedPen = QPen(Qt.red, 2)
+        self.CustomPen = QPen(Qt.black, 2)
         self.SelectionChanged = Event()
 
     def add_node(self, name, pos):
@@ -77,7 +78,13 @@ class GraphWidget(QWidget):
                     self.draw_loop(painter, edge.from_node.pos, edge.from_node.size, (1 + .1*count))
                     painter.setPen(self.DefaultPen)
                 else:
-                    self.draw_loop(painter, edge.from_node.pos, edge.from_node.size,(1 + .1*count))
+                    if(edge.fill_color != QColor(0, 0, 0)):
+                        self.CustomPen.setColor(edge.fill_color)
+                        painter.setPen(self.CustomPen)
+                        self.draw_loop(painter, edge.from_node.pos, edge.from_node.size,(1 + .1*count))
+                        painter.setPen(self.DefaultPen)
+                    else:
+                        self.draw_loop(painter, edge.from_node.pos, edge.from_node.size,(1 + .1*count))
                 
             else:
                 #make sure pair is always in the same order
@@ -92,8 +99,14 @@ class GraphWidget(QWidget):
                 #painter.drawLine(edge.from_node.pos , edge.to_node.pos )  # Adjust for the node size
                 painter.setPen(self.DefaultPen)
             else:
-                self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, count, edge)
-                #painter.drawLine(edge.from_node.pos, edge.to_node.pos )  # Adjust for the node size
+                if(edge.fill_color != QColor(0, 0, 0)):
+                    self.CustomPen.setColor(edge.fill_color)
+                    painter.setPen(self.CustomPen)
+                    self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, count, edge)
+                    painter.setPen(self.DefaultPen)
+                else:
+                    self.draw_curved_edge(painter, edge.from_node.pos, edge.to_node.pos, count, edge)
+                    #painter.drawLine(edge.from_node.pos, edge.to_node.pos )  # Adjust for the node size
         # Draw nodes
         for node in self.nodes:
             if node == self.selected:

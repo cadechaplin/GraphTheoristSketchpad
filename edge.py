@@ -1,4 +1,4 @@
-
+from PyQt5.QtGui import QColor
 
 class Edge:
 
@@ -9,3 +9,4 @@ class Edge:
         self.to_node = to_node
         self.directional = True
         self.count = count
+        self.fill_color = QColor(0, 0, 0)
