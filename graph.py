@@ -51,9 +51,9 @@ class GraphWidget(QWidget):
             if i not in existing_edges:
                 missing_edges.append(i)
         if len(missing_edges) > 0:
-            edge = Edge(from_node, to_node, missing_edges[0])
+            edge = Edge(from_node, to_node, missing_edges[0], name)
         else:
-            edge = Edge(from_node, to_node, len(existing_edges) + 1)
+            edge = Edge(from_node, to_node, len(existing_edges) + 1, name)
 
         edge.directional = directional
         from_node.edges.append(edge)
@@ -225,5 +225,7 @@ class GraphWidget(QWidget):
                     self.SelectionChanged.trigger()
                     self.update()
                     return
+            self.SelectionChanged.trigger()
+            self.update()
             
             
