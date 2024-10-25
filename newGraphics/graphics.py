@@ -186,7 +186,15 @@ if __name__ == "__main__":
     graph_widget = GraphWidget()
     graph_widget.add_node("Node1", 50, 50)
     graph_widget.add_node("Node2", 150, 150)
-    graph_widget.add_edge("straight edge", graph_widget.nodes[0], graph_widget.nodes[1])
+    graph_widget.add_edge(
+        "straight edge",
+        graph_widget.nodes[0],
+        graph_widget.nodes[1],
+        control_point=QPoint(
+            int(graph_widget.nodes[0].pos().x() - graph_widget.nodes[1].pos().x()),
+            int(graph_widget.nodes[0].pos().y() - graph_widget.nodes[1].pos().y())
+        )
+    )
     graph_widget.add_edge("curved edge", graph_widget.nodes[1], graph_widget.nodes[0], control_point=QPoint(100, 0))
     graph_widget.show()
     sys.exit(app.exec_())
