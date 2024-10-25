@@ -5,14 +5,6 @@ from graph import GraphWidget
 from edit_menu import EditMenu
 
     
-   
-
-
-
-
-
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()

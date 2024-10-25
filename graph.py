@@ -133,15 +133,29 @@ class GraphWidget(QWidget):
         painter.drawPath(path)
 
     def is_click_near_edge(self, click_pos, edge):
+        if(edge.from_node == edge.to_node):
+            return self.is_click_near_loop(click_pos, edge)
         from_pos = edge.from_node.pos
         to_pos = edge.to_node.pos
 
         # Calculate the distance from click_pos to the line segment (from_pos, to_pos)
         distance = self.point_to_line_distance(from_pos, to_pos, click_pos)
-
+        print(distance) # Debugging
         # Define a threshold for the maximum distance from the edge to be considered "selected"
         threshold = 3  # Adjust this value as needed
         return distance < threshold
+
+    def is_click_near_loop(self, click_pos, edge):
+        from_pos = edge.from_node.pos
+        size = edge.from_node.size
+        loop_size = (size * 1.1)
+        loop_pos = QPoint(int(from_pos.x() + loop_size/2), int(from_pos.y() + loop_size / 2))
+        x_distance = abs(click_pos.x() - loop_pos.x())
+        y_distance = abs(click_pos.y() - loop_pos.y())
+        distance = math.sqrt(x_distance ** 2 + y_distance ** 2)
+        print(distance) # Debugging
+        print(click_pos)
+        return (distance < loop_size / 2 + 3) and (distance > loop_size / 2 - 3)
 
     def point_to_line_distance(self, from_pos, to_pos, click_pos):
         # Convert QPoint to tuples for easier calculations
