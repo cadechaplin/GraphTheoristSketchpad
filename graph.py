@@ -18,13 +18,12 @@ class GraphWidget(QWidget):
         self.DefaultPen = QPen(Qt.black, 2)
         self.SelectedPen = QPen(Qt.red, 2)
         self.SelectionChanged = Event()
-        self.anythingChanged = Event()
 
     def add_node(self, name, pos):
         node = Node(name, pos)
         self.nodes.append(node)
-        self.anythingChanged.trigger()  
         self.update()
+    
     def deleteSelected(self):
         if self.selected:
             if isinstance(self.selected, Node):
@@ -40,22 +39,22 @@ class GraphWidget(QWidget):
             
             self.update()
         
-        self.anythingChanged.trigger()  
 
-    def add_edge(self, from_node, to_node, directional=False):
+
+    def add_edge(self, from_node, to_node, name, directional=False):
         existing_edge_count = 0
         for existing_edge in self.edges:
             if existing_edge.from_node == from_node and existing_edge.to_node == to_node:
                 if existing_edge_count < existing_edge.count:
                     existing_edge_count = existing_edge.count
-        edge = Edge(from_node, to_node, existing_edge_count+1)
+        edge = Edge(from_node, to_node, existing_edge_count+1, name)
+
         edge.directional = directional
         from_node.edges.append(edge)
         to_node.edges.append(edge)
         self.edges.append(edge)
         self.update()
 
-        self.anythingChanged.trigger()  
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -200,6 +199,7 @@ class GraphWidget(QWidget):
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.selected = None
+            self.update()
             
             for node in self.nodes:
                 distance_squared = ((node.pos.x() - event.pos().x()) ** 2 + (node.pos.y() - event.pos().y()) ** 2) ** (1/2)
@@ -213,11 +213,11 @@ class GraphWidget(QWidget):
         
             for edge in self.edges:
                 if self.is_click_near_edge(event.pos(), edge):
+                    
                     self.selected = edge
                     print(f"Edge {edge.count} from {edge.from_node.name} to {edge.to_node.name} was double-clicked")
                     self.SelectionChanged.trigger()
                     self.update()
                     return
-            self.SelectionChanged.trigger()
-            self.update()
+            
             

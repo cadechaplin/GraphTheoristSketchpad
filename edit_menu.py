@@ -28,10 +28,10 @@ class EditMenu(QWidget):
         self.selection_label = QLabel("Selection:")
         self.selection_label_Node = QLabel("Node:")
         self.selectNode = QComboBox()
-        #self.selectNode.currentTextChanged.connect(self.onNodeSelection)
+        self.selectNode.currentTextChanged.connect(self.onNodeSelection)
         self.selection_label_Edge = QLabel("Edge:")
         self.selectEdge = QComboBox()
-        #self.selectEdge.currentTextChanged.connect(self.onEdgeSelection)
+        self.selectEdge.currentTextChanged.connect(self.onEdgeSelection)
         
         self.selectionMenu.addWidget(self.selection_label)
         self.selectionMenu.addWidget(self.selection_label_Node)
@@ -93,14 +93,19 @@ class EditMenu(QWidget):
     def bind_graph(self, graph):
         self.graph = graph
         graph.SelectionChanged.update.append(self.updateSelectionMenu)
-        graph.anythingChanged.update.append(self.updateSelectionMenu)
         
         
         
     
-    def updateSelectionMenu(self):
+    def updateSelectionMenu(self, change_selection = False):
+        #Stops events from menu selection from triggering updateSelection
+        self.selectNode.blockSignals(True)
+        self.selectEdge.blockSignals(True)
+    
         self.selectNode.clear()
         self.selectEdge.clear()
+        
+        
         
         self.selectNode.addItem("None")
         for node in self.graph.nodes:
@@ -108,36 +113,46 @@ class EditMenu(QWidget):
         self.selectEdge.addItem("None")
         for edge in self.graph.edges:
             self.selectEdge.addItem(edge.name)
+        
         if self.graph.selected:
             if isinstance(self.graph.selected, Node):
                 self.selectNode.setCurrentText(self.graph.selected.name)
-                
             elif isinstance(self.graph.selected, Edge):
                 self.selectEdge.setCurrentText(self.graph.selected.name)
         
+        #Re-enables events
+        self.selectNode.blockSignals(False)
+        self.selectEdge.blockSignals(False)
+        
     def onNodeSelection(self, text):
-        if text == "None":
-            self.graph.selected = None
-        else:
-            for node in self.graph.nodes:
-                if node.name == text:
-                    self.graph.selected = node
-                    break
+        
+        for node in self.graph.nodes:
+            if node.name == text:
+                self.graph.selected = node
+                break
+            
+        self.selectEdge.blockSignals(True)
+        self.selectEdge.setCurrentText("None")
+        self.selectEdge.blockSignals(False)
+        
         self.updateSelection(self.graph.selected)
         
-        self.graph.SelectionChanged.trigger()
+        self.graph.update()
         
-    def onEdgeSelection(self, text):
-        if text == "None":
-            self.graph.selected = None
-        else:
-            for edge in self.graph.edges:
+    def onEdgeSelection(self, text = None):
+        
+        for edge in self.graph.edges:
                 if edge.name == text:
                     self.graph.selected = edge
                     break
+        
+        self.selectNode.blockSignals(True)
+        self.selectNode.setCurrentText("None")
+        self.selectNode.blockSignals(False)
+        
         self.updateSelection(self.graph.selected)
         
-        self.graph.SelectionChanged.trigger()
+        self.graph.update()
         
     def delete(self):
         #self.graph.deleteSelected()
