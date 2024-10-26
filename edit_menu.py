@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QGraphicsView
 from PyQt5.QtWidgets import QSlider, QColorDialog, QCheckBox, QComboBox
 from PyQt5.QtCore import Qt
 from node import Node
@@ -158,20 +158,27 @@ class EditMenu(QWidget):
         #self.graph.deleteSelected()
         if self.selected_item:
             if isinstance(self.selected_item, Node):
-                self.graph.nodes.remove(self.selected_item)
+                self.removeItem(self.selected_item)
                 removeList = []
                 for item in self.graph.edges:
                     if item.from_node == self.selected_item or item.to_node == self.selected_item:
                         removeList.append(item)
                 for item in removeList:
-                    self.graph.edges.remove(item)
+                    self.removeItem(self.selected_item)
+                    
             elif isinstance(self.selected_item, Edge):
-                self.graph.edges.remove(self.selected_item)
+                self.removeItem(self.selected_item)
             self.selected_item = None
             self.update_item()
             self.updateSelectionMenu()
+        self.update()
         return
-    
+    def removeItem(self,item):
+        if isinstance(item, Node):
+            self.graph.nodes.remove(item)
+        else:
+            self.graph.edges.remove(item)
+        item.onDelete.trigger()
     def update_name(self, text):
         if self.selected_item:
             self.selected_item.name = text
@@ -179,7 +186,7 @@ class EditMenu(QWidget):
 
     def update_size(self, value):
         if self.selected_item and isinstance(self.selected_item, Node):
-            self.selected_item.size = value
+            self.selected_item.updateSize(value)
             self.update_item()
 
     def update_item(self):
@@ -194,7 +201,7 @@ class EditMenu(QWidget):
 
             # Set values for Node editing
             self.name_edit.setText(item.name)
-            self.size_slider.setValue(item.size)
+            self.size_slider.setValue(item.getSize())
 
         elif isinstance(item, Edge):
             # Show Edge controls
