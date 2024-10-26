@@ -12,7 +12,6 @@ class Edge:
         self.directional = True
         self.__count = count
         self.onDelete = Event()
-        
         self.onChange = Event()
     
     def getControlPoint(self):

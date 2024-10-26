@@ -46,10 +46,12 @@ class EdgeViewModel(QGraphicsItem):
 
     def hoverEnterEvent(self, event):
         print(f"Hover enter on curved edge {self.__edge.name}")
+        self.hover = True
         self.update()
 
     def hoverLeaveEvent(self, event):
         print(f"Hover leave on curved edge {self.__edge.name}")
+        self.hover = False
         self.update()
     
     def onDelete(self):
