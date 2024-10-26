@@ -46,6 +46,10 @@ class Node(QGraphicsItem):
         self.setPos(x, y)
         self.size = size
         self.setAcceptHoverEvents(True)  # Enable hover events
+        self.dColor = Qt.blue
+        self.sColor = Qt.red
+        self.hover = False
+        self.selected = False
 
     def boundingRect(self):
         return QRectF(-self.size / 2, -self.size / 2, self.size, self.size)
@@ -56,7 +60,12 @@ class Node(QGraphicsItem):
         return path
     def paint(self, painter, option, widget):
         # Draw the node
-        painter.setBrush(QBrush(Qt.blue))
+        if self.isSelected():
+            painter.setBrush(QBrush(self.sColor))
+            painter.setPen(QPen(self.sColor, 2))
+        else:
+            painter.setBrush(QBrush(self.dColor))
+            painter.setPen(QPen(self.dColor, 2))
         painter.drawEllipse(self.boundingRect())
 
         # Draw the bounding rectangle
@@ -66,15 +75,21 @@ class Node(QGraphicsItem):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             print(f"Node {self.name} clicked")
+            self.selected = not self.selected
+        self.update()
 
     def hoverEnterEvent(self, event):
         print(f"Hover enter on node {self.name}")
+        self.hovering = True
         self.update()
 
     def hoverLeaveEvent(self, event):
         print(f"Hover leave on node {self.name}")
+        self.hovering = False
         self.update()
-
+    def isSelected(self):
+        print(self.hover)
+        return (self.hover or self.selected)
 
 class CurvedEdge(QGraphicsItem):
     def __init__(self, name, from_node, to_node, control_point):
