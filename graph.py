@@ -31,6 +31,7 @@ class GraphWidget(QGraphicsView):
         viewModel = NodeViewModel(node, self.nodes)
         node.viewModel = viewModel
         self.nodes.append(node)
+        node.onChange.update.append(self.update)
         self.scene.addItem(viewModel)
         self.update()
         
@@ -43,6 +44,7 @@ class GraphWidget(QGraphicsView):
                 if existing_edge_count < existing_edge.count:
                     existing_edge_count = existing_edge.count
         edge = Edge(from_node, to_node, existing_edge_count+1, name)
+        edge.onChange.update.append(self.update)
         viewModel = EdgeViewModel(edge)
         edge.viewModel = viewModel
         self.scene.addItem(viewModel)
