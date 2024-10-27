@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QGraphicsItem
-from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen
-from PyQt5.QtCore import Qt
-
+from PyQt5.QtGui import QPainterPath, QPainterPathStroker, QPen, QPolygonF, QBrush
+from PyQt5.QtCore import Qt, QPointF
+import math
 
 class EdgeViewModel(QGraphicsItem):
     def __init__(self, edge):
@@ -33,31 +33,73 @@ class EdgeViewModel(QGraphicsItem):
 
     def paint(self, painter, option, widget):
         # Draw the curved edge
-        painter.setPen(QPen(Qt.black, 2))
         path = self._createPath()
+        pen = QPen(Qt.black, 2)
+        painter.setPen(pen)
         painter.drawPath(path)
 
-        # Draw the shape used for hit detection
-        painter.setPen(QPen(Qt.red, 1, Qt.DashLine))
-        painter.drawPath(self.shape())
+        # Draw the arrowhead
+        if self.__edge.directional:
+            self._drawArrowhead(painter, path)
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            print(f"{self.__edge.name} from {self.__edge.from_node.name} to {self.__edge.to_node.name} clicked")
+    def _calculate_intersection_point(self, center, radius, point):
+        # Calculate direction vector from center to point
+        dx = point.x() - center.x()
+        dy = point.y() - center.y()
+        
+        # Calculate distance
+        distance = math.sqrt(dx * dx + dy * dy)
+        
+        # Normalize direction vector
+        dx = dx / distance
+        dy = dy / distance
+        
+        # Calculate intersection point
+        intersection_x = center.x() + dx * radius
+        intersection_y = center.y() + dy * radius
+        
+        return QPointF(intersection_x, intersection_y)
 
-    def hoverEnterEvent(self, event):
-        print(f"Hover enter on curved edge {self.__edge.name}")
-        self.hover = True
-        self.update()
+    def _drawArrowhead(self, painter, path):
+        # Get end points and calculate direction
+        end_point = self.__edge.to_node.getPos()
+        t = 0.95  # Get a point slightly before the end for direction
+        direction_point = path.pointAtPercent(t)
+        
+        # Calculate the intersection point with the circular node
+        node_radius = self.__edge.to_node.getSize() / 2
+        intersection = self._calculate_intersection_point(end_point, node_radius, direction_point)
+        
+        # Calculate the direction vector from direction point to intersection
+        dx = direction_point.x() - intersection.x()  # Reversed to get correct direction
+        dy = direction_point.y() - intersection.y()
+        angle = math.atan2(dy, dx)
+        
+        # Arrow dimensions
+        arrow_length = 15
+        arrow_width = 10
+        
+        # The tip is at the intersection point
+        tip = intersection
+        
+        # Base points are now calculated in front of the intersection point
+        left_base = QPointF(
+            tip.x() - math.cos(angle + math.pi * 0.2) * arrow_length,
+            tip.y() - math.sin(angle + math.pi * 0.2) * arrow_length
+        )
+        
+        right_base = QPointF(
+            tip.x() - math.cos(angle - math.pi * 0.2) * arrow_length,
+            tip.y() - math.sin(angle - math.pi * 0.2) * arrow_length
+        )
+        
+        # Create and draw the arrowhead
+        arrow_head = QPolygonF([tip, left_base, right_base])
+        painter.setBrush(QBrush(Qt.black))
+        painter.drawPolygon(arrow_head)
 
-    def hoverLeaveEvent(self, event):
-        print(f"Hover leave on curved edge {self.__edge.name}")
-        self.hover = False
-        self.update()
     
     def onDelete(self):
-        scene = self.scene()
-        if scene:
-            scene.removeItem(self)
-            scene.update()
-    
+        if self.scene():
+            self.scene().removeItem(self)
+            self.scene().update()

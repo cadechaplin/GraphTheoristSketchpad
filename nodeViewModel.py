@@ -14,7 +14,7 @@ class NodeViewModel(QGraphicsItem):
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)  # Enable geometry change notifications
         self.dColor = Qt.blue
         self.sColor = Qt.red
-        self.hoverColor = Qt.green  # Color when hovering
+        self.hoverColor = Qt.transparent  # Color when hovering
         self.hover = False
         self.selected = False
         self.hovering = False  # Initialize hovering state
