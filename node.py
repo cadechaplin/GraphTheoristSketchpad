@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt
 from events import Event
 class Node:
     def __init__(self, name, pos):
+        self.viewModel = None
         self.name = name
         self.__pos = pos
         self.__edges = []

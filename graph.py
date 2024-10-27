@@ -9,24 +9,31 @@ from node import Node
 from nodeViewModel import NodeViewModel
 from edge import Edge
 from edgeViewModel import EdgeViewModel
+from selectionManager import selectionManager
 
 class GraphWidget(QGraphicsView):
     def __init__(self):
         super().__init__()
-        self.nodes = []
+        self.nodes = selectionManager()
+        self.SelectionChanged = Event()
+        self.nodes.onSelectionChanged.update.append(self.SelectionChanged.trigger)
         self.edges = []
         self.dragging_node = None
         self.selected = None
-        self.SelectionChanged = Event()
+        
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
+        self.node_counter = 1  # Initialize node counter
+        self.edge_counter = 1  # Initialize edge counter
 
     def add_node(self, name, pos):
         node = Node(name, pos)
-        viewModel = NodeViewModel(node)
+        viewModel = NodeViewModel(node, self.nodes)
+        node.viewModel = viewModel
         self.nodes.append(node)
         self.scene.addItem(viewModel)
         self.update()
+        
         
         
     def add_edge(self, from_node, to_node, name, directional=False):
@@ -37,6 +44,7 @@ class GraphWidget(QGraphicsView):
                     existing_edge_count = existing_edge.count
         edge = Edge(from_node, to_node, existing_edge_count+1, name)
         viewModel = EdgeViewModel(edge)
+        edge.viewModel = viewModel
         self.scene.addItem(viewModel)
         edge.directional = directional
         '''

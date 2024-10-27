@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsItem, QGraph
 from PyQt5.QtGui import QPainter, QPen, QBrush, QPainterPath, QPainterPathStroker
 
 class NodeViewModel(QGraphicsItem):
-    def __init__(self, node):
+    def __init__(self, node, selectionList):
         super(NodeViewModel, self).__init__()
         self.__node = node
         self.__node.onChange.update.append(self.update)
@@ -19,6 +19,7 @@ class NodeViewModel(QGraphicsItem):
         self.selected = False
         self.hovering = False  # Initialize hovering state
         self.dragging = False  # Initialize dragging state
+        self.selectionList = selectionList
 
         # Add label
         self.label = QGraphicsTextItem(self.__node.name, self)
@@ -35,6 +36,7 @@ class NodeViewModel(QGraphicsItem):
         # Set the brush color based on the state
         if self.hovering:
             painter.setBrush(QBrush(self.hoverColor))
+            painter.setPen(QPen(self.hoverColor, 2))
         elif self.isSelected():
             painter.setBrush(QBrush(self.sColor))
             painter.setPen(QPen(self.sColor, 2))
@@ -72,6 +74,10 @@ class NodeViewModel(QGraphicsItem):
         super(NodeViewModel, self).mouseReleaseEvent(event)
         
     def mouseDoubleClickEvent(self, event):
+        if self.selected:
+            self.selectionList.setSelected(None)
+        else:
+            self.selectionList.setSelected(self.__node)
         self.selected = not self.selected
         self.update()
         return super().mouseDoubleClickEvent(event)
@@ -104,3 +110,4 @@ class NodeViewModel(QGraphicsItem):
         if scene:
             scene.removeItem(self)
             scene.update()
+    

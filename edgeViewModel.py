@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 class EdgeViewModel(QGraphicsItem):
     def __init__(self, edge):
         super(EdgeViewModel, self).__init__()
+        self.viewModel = None
         self.__edge = edge
         self.__edge.from_node.onChange.update.append(self.update)
         self.__edge.to_node.onChange.update.append(self.update)
@@ -59,3 +60,4 @@ class EdgeViewModel(QGraphicsItem):
         if scene:
             scene.removeItem(self)
             scene.update()
+    
