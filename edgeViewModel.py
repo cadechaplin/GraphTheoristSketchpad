@@ -21,9 +21,43 @@ class EdgeViewModel(QGraphicsItem):
 
     def _createPath(self):
         path = QPainterPath()
-        path.moveTo(self.__edge.from_node.getPos())
-        path.quadTo(self.__edge.getControlPoint(), self.__edge.to_node.getPos())
+        if self.__edge.from_node == self.__edge.to_node:
+            # Get node properties
+            node_pos = self.__edge.from_node.getPos()
+            node_size = self.__edge.from_node.getSize()
+            count = self.__edge.getCount() - 1  # Adjust for multiple self-loops
+            
+            # Make radius much larger so loop extends beyond node
+            radius = node_size * (3 + 0.8 * count)  # Increased multiplier from 1.5 to 3
+            base_angle = math.pi/6 + (math.pi/8 * count)  # 30 degrees + offset for each loop
+            
+            # Calculate start and end points on node circumference
+            start_point = QPointF(
+                node_pos.x() + (node_size/2) * math.cos(-base_angle),
+                node_pos.y() + (node_size/2) * math.sin(-base_angle)
+            )
+            end_point = QPointF(
+                node_pos.x() + (node_size/2) * math.cos(base_angle),
+                node_pos.y() + (node_size/2) * math.sin(base_angle)
+            )
+            
+            # Calculate control points for smooth curve with larger radius
+            control1 = QPointF(
+                start_point.x() - radius * math.cos(-base_angle - math.pi/6),
+                start_point.y() - radius * math.sin(-base_angle - math.pi/6)
+            )
+            control2 = QPointF(
+                end_point.x() - radius * math.cos(base_angle + math.pi/6),
+                end_point.y() - radius * math.sin(base_angle + math.pi/6)
+            )
+            
+            path.moveTo(start_point)
+            path.cubicTo(control1, control2, end_point)
+        else:
+            path.moveTo(self.__edge.from_node.getPos())
+            path.quadTo(self.__edge.getControlPoint(), self.__edge.to_node.getPos())
         return path
+
 
     def shape(self):
         path = self._createPath()
@@ -76,8 +110,8 @@ class EdgeViewModel(QGraphicsItem):
         angle = math.atan2(dy, dx)
         
         # Arrow dimensions
-        arrow_length = 15
-        arrow_width = 10
+        arrow_length = 10
+        arrow_width = 6
         
         # The tip is at the intersection point
         tip = intersection

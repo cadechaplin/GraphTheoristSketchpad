@@ -13,6 +13,8 @@ class Edge:
         self.__count = count
         self.onDelete = Event()
         self.onChange = Event()
+    def getCount(self):
+        return self.__count
     
     def getControlPoint(self):
         if self.to_node == self.from_node:
