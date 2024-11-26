@@ -74,8 +74,8 @@ class EditMenu(QWidget):
         self.layout.addWidget(self.add_node_button)
         self.layout.addWidget(self.add_edge_button)
 
-        # Initially hide all controls
-        self.hide_node_controls()
+        # Initially hide edge controls
+        #self.hide_node_controls()
         self.hide_edge_controls()
 
         # Variable to store the currently selected item (Node or Edge)
@@ -92,6 +92,7 @@ class EditMenu(QWidget):
     def bind_graph(self, graph):
         self.graph = graph
         graph.SelectionChanged.update.append(self.updateSelectionMenu)
+        graph.nodes.onSelectionChanged.update.append(self.updateSelectionMenu)  # Handle node selection change
 
     def add_node(self):
         name = f"v{self.graph.node_counter}"
@@ -133,16 +134,16 @@ class EditMenu(QWidget):
         
         
     
-    def updateSelectionMenu(self, change_selection = False):
-        #Stops events from menu selection from triggering updateSelection
+    def updateSelectionMenu(self, change_selection=False):
+        # Block all signals during selection updates
         self.selectNode.blockSignals(True)
         self.selectEdge.blockSignals(True)
+        self.name_edit.blockSignals(True)
     
         self.selectNode.clear()
         self.selectEdge.clear()
         
-        
-        
+        # Add items to selection menus
         self.selectNode.addItem("None")
         for node in self.graph.nodes:
             self.selectNode.addItem(node.name)
@@ -150,34 +151,70 @@ class EditMenu(QWidget):
         for edge in self.graph.edges:
             self.selectEdge.addItem(edge.name)
         
-        if self.graph.nodes.selected:
-            if isinstance(self.graph.nodes.selected, Node):
-                self.selectNode.setCurrentText(self.graph.nodes.selected.name)
-            elif isinstance(self.graph.selected, Edge):
-                self.selectEdge.setCurrentText(self.graph.selected.name)
+        # Reset both selections
+        self.selectNode.setCurrentText("None")
+        self.selectEdge.setCurrentText("None")
+        self.selected_item = None
         
-        #Re-enables events
+        # Update based on current selection
+        if self.graph.nodes.selected and isinstance(self.graph.nodes.selected, Node):
+            self.selectNode.setCurrentText(self.graph.nodes.selected.name)
+            self.show_node_controls()
+            self.name_edit.setText(self.graph.nodes.selected.name)
+            self.selected_item = self.graph.nodes.selected
+        elif self.graph.selected and isinstance(self.graph.selected, Edge):
+            self.selectEdge.setCurrentText(self.graph.selected.name)
+            self.show_edge_controls()
+            self.name_edit.setText(self.graph.selected.name)
+            self.selected_item = self.graph.selected
+        else:
+            self.show_node_controls()  # Default to node controls
+            self.name_edit.clear()
+        
+        # Re-enable signals
         self.selectNode.blockSignals(False)
         self.selectEdge.blockSignals(False)
+        self.name_edit.blockSignals(False)
+    
+        
         
     def onNodeSelection(self, text):
-        
-        for node in self.graph.nodes:
-            if node.name == text:
-                self.graph.selected = node
-                break
-            
+        # Block all signals during selection change
+        self.name_edit.blockSignals(True)
         self.selectEdge.blockSignals(True)
-        self.selectEdge.setCurrentText("None")
-        self.selectEdge.blockSignals(False)
         
-        self.updateSelection(self.graph.selected)
+        if text == "None":
+            self.graph.nodes.setSelected(None)
+        else:
+            # Properly deselect edge first
+            if self.graph.selected:
+                old_edge = self.graph.selected
+                self.graph.selected = None
+                old_edge.viewModel.update()
+            
+            for node in self.graph.nodes:
+                if node.name == text:
+                    self.graph.nodes.setSelected(node)
+                    break
+        
+        # Reset edge selection UI
+        self.selectEdge.setCurrentText("None")
+        
+        # Update the editor UI
+        self.updateSelection(self.graph.nodes.selected)
+        
+        # Re-enable signals
+        self.name_edit.blockSignals(False)
+        self.selectEdge.blockSignals(False)
         
         self.graph.update()
         
-    def onEdgeSelection(self, text = None):
-        
-        for edge in self.graph.edges:
+    def onEdgeSelection(self, text=None):
+        if text == "None":
+            self.graph.selected = None
+        else:
+            self.graph.nodes.deselect()  # Deselect the currently selected node
+            for edge in self.graph.edges:
                 if edge.name == text:
                     self.graph.selected = edge
                     break
@@ -187,6 +224,11 @@ class EditMenu(QWidget):
         self.selectNode.blockSignals(False)
         
         self.updateSelection(self.graph.selected)
+        
+        # Ensure the edge selection menu displays the selected edge
+        self.selectEdge.blockSignals(True)
+        self.selectEdge.setCurrentText(text)
+        self.selectEdge.blockSignals(False)
         
         self.graph.update()
         
@@ -219,6 +261,10 @@ class EditMenu(QWidget):
         if self.selected_item:
             self.selected_item.name = text
             self.update_item()
+            self.updateSelectionMenu()  # Refresh the selection menu to reflect the new name
+            if isinstance(self.selected_item, Edge):
+                self.selectEdge.setCurrentText(self.graph.selected.name)
+
 
     def update_size(self, value):
         if self.selected_item and isinstance(self.selected_item, Node):
@@ -249,10 +295,12 @@ class EditMenu(QWidget):
             self.name_edit.setText(item.name)
 
         else:
-            # Hide all controls when no item is selected
-            self.hide_node_controls()
+            # Show node controls to maintain spacing
+            self.show_node_controls()  
             self.hide_edge_controls()
-
+            self.name_edit.clear()
+            self.size_slider.setValue(10)
+            self.toggleDirectionalCheckbox.setChecked(False)
             self.selected_item = None
 
         self.update()

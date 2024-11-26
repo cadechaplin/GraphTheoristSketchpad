@@ -36,10 +36,19 @@ class selectionManager:
             self.selected.viewModel.selected = False
             self.selected.viewModel.update()
         self.selected = item
+        if item:
+            item.viewModel.selected = True
+            item.viewModel.update()
         self.t()
     
-    
-    
-    
-        
-        
+    def deselect(self):
+        if self.selected:
+            self.selected.viewModel.selected = False
+            self.selected.viewModel.update()
+            self.selected = None
+            self.t()
+
+
+
+
+
