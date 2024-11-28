@@ -26,6 +26,7 @@ class GraphWidget(QGraphicsView):
         self.node_counter = 1  # Initialize node counter
         self.edge_counter = 1  # Initialize edge counter
         self.countLookup = {}  # Dictionary to store edge counts for each node pair
+        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
 
     def add_node(self, name, pos):
         node = Node(name, pos)

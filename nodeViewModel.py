@@ -63,6 +63,9 @@ class NodeViewModel(QGraphicsItem):
             self.__node.updatePos(new_pos)
             self.setPos(new_pos)
             self.update()
+            # Force the scene to update
+            if self.scene():
+                self.scene().update()
         super(NodeViewModel, self).mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
