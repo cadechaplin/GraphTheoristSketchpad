@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QGraphicsView, QInputDialog
-from PyQt5.QtWidgets import QSlider, QColorDialog, QCheckBox, QComboBox
+from PyQt5.QtWidgets import QSlider, QColorDialog, QCheckBox, QComboBox, QTabWidget
 from PyQt5.QtCore import Qt, QPoint
 from node import Node
 from edge import Edge
@@ -8,11 +8,24 @@ from edge import Edge
 
 class EditMenu(QWidget):
         
+
+
     def __init__(self):
         super().__init__()
         self.graph = None
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+
+        # Create a QTabWidget
+        self.tabs = QTabWidget()
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self.tabs)
+        self.setLayout(main_layout)
+        
+
+
+        # Create a QWidget for the Controls tab
+        controls_widget = QWidget()
+        self.controls_layout = QVBoxLayout()
+        controls_widget.setLayout(self.controls_layout)
 
         # Create NodeMenu and EdgeMenu layouts
         self.NodeMenu = QVBoxLayout()
@@ -24,7 +37,7 @@ class EditMenu(QWidget):
         self.name_edit = QLineEdit()
         self.color_button = QPushButton("Choose Color")
         self.delete_button = QPushButton("Delete")
-        
+
         # Selection menu controls
         self.selection_label = QLabel("Selection:")
         self.selection_label_Node = QLabel("Node:")
@@ -33,7 +46,8 @@ class EditMenu(QWidget):
         self.selection_label_Edge = QLabel("Edge:")
         self.selectEdge = QComboBox()
         self.selectEdge.currentTextChanged.connect(self.onEdgeSelection)
-        
+
+        # Add widgets to selectionMenu
         self.selectionMenu.addWidget(self.selection_label)
         self.selectionMenu.addWidget(self.selection_label_Node)
         self.selectionMenu.addWidget(self.selectNode)
@@ -43,12 +57,12 @@ class EditMenu(QWidget):
         # Node-specific controls
         self.size_label = QLabel("Size:")
         self.size_slider = QSlider(Qt.Horizontal)
-        self.size_slider.setRange(10, 100)  # Adjust range as needed for node size
+        self.size_slider.setRange(10, 100)
 
-        # Edge specific controls
+        # Edge-specific controls
         self.toggleDirectionalCheckbox = QCheckBox("Directional")
         self.toggleDirectionalCheckbox.stateChanged.connect(self.updateDirectional)
-        
+
         # Add controls to NodeMenu
         self.NodeMenu.addWidget(self.name_label)
         self.NodeMenu.addWidget(self.name_edit)
@@ -64,23 +78,19 @@ class EditMenu(QWidget):
         self.EdgeMenu.addWidget(self.toggleDirectionalCheckbox)
         self.EdgeMenu.addWidget(self.delete_button)
 
-        # Add layouts to the main layout
-        self.layout.addLayout(self.selectionMenu)
-        self.layout.addLayout(self.NodeMenu)
-        self.layout.addLayout(self.EdgeMenu)
+        # Add layouts to the controls_layout
+        self.controls_layout.addLayout(self.selectionMenu)
+        self.controls_layout.addLayout(self.NodeMenu)
+        self.controls_layout.addLayout(self.EdgeMenu)
 
         # Add Node and Edge buttons
         self.add_node_button = QPushButton("Add Node")
         self.add_edge_button = QPushButton("Add Edge")
-        self.layout.addWidget(self.add_node_button)
-        self.layout.addWidget(self.add_edge_button)
+        self.controls_layout.addWidget(self.add_node_button)
+        self.controls_layout.addWidget(self.add_edge_button)
 
-        # Initially hide edge controls
-        #self.hide_node_controls()
-        self.hide_edge_controls()
-
-        # Variable to store the currently selected item (Node or Edge)
-        self.selected_item = None
+        # Add the controls widget as a tab
+        self.tabs.addTab(controls_widget, "Controls")
 
         # Connect signals
         self.color_button.clicked.connect(self.choose_color)
@@ -90,6 +100,19 @@ class EditMenu(QWidget):
         self.add_node_button.clicked.connect(self.add_node)
         self.add_edge_button.clicked.connect(self.add_edge)
 
+        # Initialize visibility
+        self.hide_edge_controls()
+
+        # Variable to store the currently selected item
+        self.selected_item = None
+        
+        #example for adding new tab
+        new_tab_widget = QWidget()
+        new_tab_layout = QVBoxLayout()
+        new_tab_widget.setLayout(new_tab_layout)
+        # Add widgets to new_tab_layout as needed
+        self.tabs.addTab(new_tab_widget, "New Tab")
+        
     def bind_graph(self, graph):
         self.graph = graph
         graph.SelectionChanged.update.append(self.updateSelectionMenu)
