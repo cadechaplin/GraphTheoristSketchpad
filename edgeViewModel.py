@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QPointF
 import math
 
 class EdgeViewModel(QGraphicsItem):
-    def __init__(self, edge):
+    def __init__(self, edge, selectionList):
         super(EdgeViewModel, self).__init__()
         self.viewModel = None
         self.__edge = edge
@@ -14,6 +14,8 @@ class EdgeViewModel(QGraphicsItem):
         self.setAcceptHoverEvents(True)  # Enable hover events
         self.__edge.onChange.update.append(self.update)
         self.__edge.onDelete.update.append(self.onDelete)
+        self.selected = False
+        self.selectionList = selectionList
 
     def boundingRect(self):
         path = self._createPath()
@@ -67,8 +69,12 @@ class EdgeViewModel(QGraphicsItem):
 
     def paint(self, painter, option, widget):
         # Draw the curved edge
+        if self.selected:
+            pen = QPen(Qt.red, 2)
+        else:
+            pen = QPen(Qt.black, 2)
         path = self._createPath()
-        pen = QPen(Qt.black, 2)
+        
         painter.setPen(pen)
         painter.drawPath(path)
 
@@ -131,9 +137,25 @@ class EdgeViewModel(QGraphicsItem):
         arrow_head = QPolygonF([tip, left_base, right_base])
         painter.setBrush(QBrush(Qt.black))
         painter.drawPolygon(arrow_head)
+        
+    def mouseDoubleClickEvent(self, event):
+        # Clear any selected edge from the graph
+        if hasattr(self.selectionList, 'graph'):
+            self.selectionList.graph.selected = None  # Always ensure edge is deselected
+                
+        if self.selected:
+            self.selectionList.setSelected(None)
+            self.selected = False
+        else:
+            self.selectionList.setSelected(self.__edge)
+            self.selected = True
+        
+        self.update()
+        return super().mouseDoubleClickEvent(event)
 
     
     def onDelete(self):
-        if self.scene():
-            self.scene().removeItem(self)
-            self.scene().update()
+        scene = self.scene()
+        if scene:
+            scene.removeItem(self)
+            scene.update()

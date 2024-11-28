@@ -47,6 +47,7 @@ class EditMenu(QWidget):
 
         # Edge specific controls
         self.toggleDirectionalCheckbox = QCheckBox("Directional")
+        self.toggleDirectionalCheckbox.stateChanged.connect(self.updateDirectional)
         
         # Add controls to NodeMenu
         self.NodeMenu.addWidget(self.name_label)
@@ -126,7 +127,13 @@ class EditMenu(QWidget):
         if self.selected_item:
             color = QColorDialog.getColor()
             if color.isValid():
-                self.selected_item.fill_color = color  # Assume Node and Edge both have a 'color' attribute
+                if isinstance(self.selected_item, Node):
+                    # Update node color
+                    self.selected_item.viewModel.dColor = color
+                    self.selected_item.viewModel.hoverColor = color.lighter(125)
+                elif isinstance(self.selected_item, Edge):
+                    # Edge color handling if needed
+                    pass
                 self.update_item()
 
     
@@ -211,18 +218,33 @@ class EditMenu(QWidget):
         
     def onEdgeSelection(self, text=None):
         if text == "None":
-            self.graph.selected = None
+            if self.graph.selected:
+                old_edge = self.graph.selected
+                self.graph.selected = None
+                old_edge.viewModel.selected = False
+                old_edge.viewModel.update()
         else:
             self.graph.nodes.deselect()  # Deselect the currently selected node
+            
+            # Clear old edge selection if exists
+            if self.graph.selected:
+                old_edge = self.graph.selected
+                old_edge.viewModel.selected = False
+                old_edge.viewModel.update()
+                self.graph.selected = None
+                    
             for edge in self.graph.edges:
                 if edge.name == text:
                     self.graph.selected = edge
+                    edge.viewModel.selected = True
+                    edge.viewModel.update()
                     break
         
         self.selectNode.blockSignals(True)
         self.selectNode.setCurrentText("None")
         self.selectNode.blockSignals(False)
         
+        # Update selection with the selected edge
         self.updateSelection(self.graph.selected)
         
         # Ensure the edge selection menu displays the selected edge
@@ -270,6 +292,12 @@ class EditMenu(QWidget):
         if self.selected_item and isinstance(self.selected_item, Node):
             self.selected_item.updateSize(value)
             self.update_item()
+            
+    def updateDirectional(self, value):
+        if self.selected_item and isinstance(self.selected_item, Edge):
+            self.selected_item.directional = value
+            self.selected_item.viewModel.update()
+            self.update_item()
 
     def update_item(self):
         # Redraw the graph after any change
@@ -289,13 +317,17 @@ class EditMenu(QWidget):
             # Show Edge controls
             self.show_edge_controls()
 
+            
+            self.toggleDirectionalCheckbox.blockSignals(True)
             self.toggleDirectionalCheckbox.setChecked(item.directional)
-            self.toggleDirectionalCheckbox.stateChanged.connect(self.update_item)
+            self.toggleDirectionalCheckbox.blockSignals(False)
+            
             # Set values for Edge editing
             self.name_edit.setText(item.name)
 
         else:
             # Show node controls to maintain spacing
+            
             self.show_node_controls()  
             self.hide_edge_controls()
             self.name_edit.clear()

@@ -37,7 +37,7 @@ class NodeViewModel(QGraphicsItem):
             painter.setBrush(QBrush(self.hoverColor))
             painter.setPen(QPen(self.hoverColor, 4))
         elif self.isSelected():
-            painter.setBrush(QBrush(self.sColor))
+            painter.setBrush(QBrush(self.dColor))
             painter.setPen(QPen(self.sColor, 2))
         else:
             painter.setBrush(QBrush(self.dColor))

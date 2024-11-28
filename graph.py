@@ -45,7 +45,7 @@ class GraphWidget(QGraphicsView):
                     existing_edge_count = existing_edge.count
         edge = Edge(from_node, to_node, existing_edge_count+1, name)
         edge.onChange.update.append(self.update)
-        viewModel = EdgeViewModel(edge)
+        viewModel = EdgeViewModel(edge, self.nodes)
         edge.viewModel = viewModel
         self.scene.addItem(viewModel)
         edge.directional = directional

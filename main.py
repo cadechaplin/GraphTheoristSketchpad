@@ -12,7 +12,9 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
 
         self.graph_widget = GraphWidget()
+        
         self.setCentralWidget(self.graph_widget)
+
 
         # Create a QDockWidget for the buttons
         dock_widget = QDockWidget("Controls", self)
