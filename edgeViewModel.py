@@ -79,7 +79,7 @@ class EdgeViewModel(QGraphicsItem):
         painter.drawPath(path)
 
         # Draw the arrowhead
-        if self.__edge.directional:
+        if self.__edge.directional and self.__edge.from_node != self.__edge.to_node:
             self._drawArrowhead(painter, path)
 
     def _calculate_intersection_point(self, center, radius, point):
