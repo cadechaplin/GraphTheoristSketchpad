@@ -18,27 +18,28 @@ class Edge:
     
     def getControlPoint(self):
         if self.to_node == self.from_node:
-            # Calculate the control point for self-loops
+            # Self-loop handling unchanged
             node_pos = self.from_node.getPos()
-            angle = (2 * math.pi / 10) * self.__count  # Adjust the divisor to control the spread of self-loops
-            offset_distance = 50 + 20 * self.__count  # Adjust the base distance and multiplier as needed
-            control_point = node_pos + QPointF(math.cos(angle) * offset_distance, math.sin(angle) * offset_distance)
-            return control_point
-        # Calculate the midpoint
+            angle = (2 * math.pi / 10) * self.__count
+            offset_distance = 50 + 20 * self.__count
+            return node_pos + QPointF(math.cos(angle) * offset_distance, 
+                                    math.sin(angle) * offset_distance)
+        
+        # For parallel edges
         midpoint = self.from_node.getPos() + (self.to_node.getPos() - self.from_node.getPos()) / 2
-
-        # Calculate the perpendicular vector
         direction = self.to_node.getPos() - self.from_node.getPos()
         perpendicular = QPointF(-direction.y(), direction.x())
-
-        # Normalize the perpendicular vector
+        
+        # Normalize perpendicular vector
         length = (perpendicular.x()**2 + perpendicular.y()**2)**0.5
         if length != 0:
             perpendicular /= length
-
-        # Offset the control point based on the count
-        offset_distance = 20 * self.__count  # Adjust the multiplier as needed
-        control_point = midpoint + perpendicular * offset_distance
-
-        return control_point
+            
+            # Alternate sides for even/odd count and increase offset with count
+            side = 1 if self.__count % 2 == 0 else -1
+            offset = (self.__count + 1) // 2  # Increment offset for each pair
+            offset_distance = 30 * offset * side
+            return midpoint + perpendicular * offset_distance
+        
+        return midpoint
     
