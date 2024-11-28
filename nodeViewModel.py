@@ -35,12 +35,12 @@ class NodeViewModel(QGraphicsItem):
         # Set the brush color based on the state
         if self.hovering:
             painter.setBrush(QBrush(self.hoverColor))
-            painter.setPen(QPen(self.hoverColor, 4))
-        elif self.isSelected():
+        else: 
             painter.setBrush(QBrush(self.dColor))
+        if self.isSelected():
             painter.setPen(QPen(self.sColor, 2))
         else:
-            painter.setBrush(QBrush(self.dColor))
+            painter.setPen(QPen(Qt.black, 2))
         
         # Draw the node
         painter.drawEllipse(self.boundingRect())
