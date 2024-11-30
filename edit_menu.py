@@ -34,6 +34,7 @@ class EditMenu(QWidget):
         # Common controls
         self.name_label = QLabel("Name:")
         self.name_edit = QLineEdit()
+        self.name_edit_accept_button = QPushButton("Change Name")
         self.color_button = QPushButton("Choose Color")
         self.delete_button = QPushButton("Delete")
 
@@ -65,6 +66,7 @@ class EditMenu(QWidget):
         # Add controls to NodeMenu
         self.NodeMenu.addWidget(self.name_label)
         self.NodeMenu.addWidget(self.name_edit)
+        self.NodeMenu.addWidget(self.name_edit_accept_button)
         self.NodeMenu.addWidget(self.color_button)
         self.NodeMenu.addWidget(self.size_label)
         self.NodeMenu.addWidget(self.size_slider)
@@ -73,6 +75,7 @@ class EditMenu(QWidget):
         # Add controls to EdgeMenu
         self.EdgeMenu.addWidget(self.name_label)
         self.EdgeMenu.addWidget(self.name_edit)
+        self.EdgeMenu.addWidget(self.name_edit_accept_button)
         self.EdgeMenu.addWidget(self.color_button)
         self.EdgeMenu.addWidget(self.toggleDirectionalCheckbox)
         self.EdgeMenu.addWidget(self.delete_button)
@@ -93,7 +96,7 @@ class EditMenu(QWidget):
 
         # Connect signals
         self.color_button.clicked.connect(self.choose_color)
-        self.name_edit.textChanged.connect(self.update_name)
+        self.name_edit_accept_button.clicked.connect(self.update_name)
         self.size_slider.valueChanged.connect(self.update_size)
         self.delete_button.clicked.connect(self.delete)
         self.add_node_button.clicked.connect(self.add_node)
@@ -145,7 +148,10 @@ class EditMenu(QWidget):
         from_node = next(node for node in self.graph.nodes if node.name == node1_name)
         to_node = next(node for node in self.graph.nodes if node.name == node2_name)
         
-        self.graph.add_edge(from_node, to_node, "edge " + str(self.graph.edge_counter), True)
+        edge_counter = self.graph.edge_counter
+        while f"edge {edge_counter}" in [edge.name for edge in self.graph.edges]:
+            edge_counter += 1
+        self.graph.add_edge(from_node, to_node, "edge " + str(edge_counter), True)
         self.graph.edge_counter += 1
         self.updateSelectionMenu()
     
@@ -305,8 +311,9 @@ class EditMenu(QWidget):
             self.graph.edges.remove(item)
         item.onDelete.trigger()
     
-    def update_name(self, text):                
+    def update_name(self):                
         if self.selected_item:
+            text = self.name_edit.text()
             if isinstance(self.selected_item, Node):
                 if text in [node.name for node in self.graph.nodes]:
                     QMessageBox.warning(
