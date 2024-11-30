@@ -13,6 +13,14 @@ class Edge:
         self.__count = count
         self.onDelete = Event()
         self.onChange = Event()
+        # Register with both nodes
+        from_node.addEdge(self)
+        to_node.addEdge(self)
+
+    def __del__(self):
+        self.from_node.removeEdge(self)
+        self.to_node.removeEdge(self)
+
     def getCount(self):
         return self.__count
     

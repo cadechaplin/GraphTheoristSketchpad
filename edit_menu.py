@@ -127,9 +127,20 @@ class EditMenu(QWidget):
             node_count += 1
             name = f"v{node_count}"
         self.graph.node_counter += 1
-        pos = QPoint(100 + len(self.graph.nodes) * 50, 300)
-        self.graph.add_node(name, pos)
+        # Get viewport center
+        viewport_center = self.graph.viewport().rect().center()
         
+        # Calculate offset from center (spiral or grid pattern)
+        x_offset = (self.graph.node_counter - 1) * 100  # Increased spacing
+        y_offset = 0  # Can modify for different patterns
+        
+        # Convert to scene coordinates
+        scene_pos = self.graph.mapToScene(
+            viewport_center.x() + x_offset - 200,  # Subtract offset to start more to the left
+            viewport_center.y() + y_offset
+        )
+        
+        self.graph.add_node(name, scene_pos)
         self.updateSelectionMenu()
 
     def add_edge(self):
@@ -167,11 +178,6 @@ class EditMenu(QWidget):
                     # Edge color handling if needed
                     pass
                 self.update_item()
-
-    
-        
-        
-        
     
     def updateSelectionMenu(self, change_selection=False):
         # Block all signals during selection updates
@@ -214,8 +220,6 @@ class EditMenu(QWidget):
         self.selectNode.blockSignals(False)
         self.selectEdge.blockSignals(False)
         self.name_edit.blockSignals(False)
-    
-        
         
     def onNodeSelection(self, text):
         # Block all signals during selection change
@@ -291,17 +295,21 @@ class EditMenu(QWidget):
         if self.selected_item:
             if isinstance(self.selected_item, Node):
                 self.removeItem(self.selected_item)
+                self.graph.node_count -= 1
                 removeList = []
                 for item in self.graph.edges:
                     if item.from_node == self.selected_item or item.to_node == self.selected_item:
                         removeList.append(item)
                 for item in removeList:
+                    self.graph.edge_count -= 1
                     self.removeItem(item)     
             elif isinstance(self.selected_item, Edge):
+                self.graph.edge_count -= 1
                 self.removeItem(self.selected_item)
             self.selected_item = None
             self.update_item()
             self.updateSelectionMenu()
+        self.graph.update_counters()
         self.update()
         return
     def removeItem(self,item):
