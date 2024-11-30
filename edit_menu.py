@@ -1,5 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QGraphicsView, QInputDialog
-from PyQt5.QtWidgets import QSlider, QColorDialog, QCheckBox, QComboBox, QTabWidget
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit, QGraphicsView, QInputDialog, QSlider, QColorDialog, QCheckBox, QComboBox, QTabWidget, QMessageBox
 from PyQt5.QtCore import Qt, QPoint
 from node import Node
 from edge import Edge
@@ -120,6 +119,10 @@ class EditMenu(QWidget):
 
     def add_node(self):
         name = f"v{self.graph.node_counter}"
+        node_count = self.graph.node_counter
+        while name in [node.name for node in self.graph.nodes]:
+            node_count += 1
+            name = f"v{node_count}"
         self.graph.node_counter += 1
         pos = QPoint(100 + len(self.graph.nodes) * 50, 300)
         self.graph.add_node(name, pos)
@@ -302,8 +305,21 @@ class EditMenu(QWidget):
             self.graph.edges.remove(item)
         item.onDelete.trigger()
     
-    def update_name(self, text):
+    def update_name(self, text):                
         if self.selected_item:
+            if isinstance(self.selected_item, Node):
+                if text in [node.name for node in self.graph.nodes]:
+                    QMessageBox.warning(
+                        self,
+                        "Duplicate Name",
+                        "Duplicate node names are not allowed.",
+                        QMessageBox.Ok
+                    )
+                    # Reset name edit to original name
+                    self.name_edit.blockSignals(True)
+                    self.name_edit.setText(self.selected_item.name)
+                    self.name_edit.blockSignals(False)
+                    return
             self.selected_item.name = text
             self.update_item()
             self.updateSelectionMenu()  # Refresh the selection menu to reflect the new name
