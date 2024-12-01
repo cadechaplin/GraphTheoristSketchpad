@@ -153,6 +153,14 @@ class EditMenu(QWidget):
         node2_name, ok2 = QInputDialog.getItem(self, "Add Edge", "Select second node:", node_names)
         if not ok2 or not node2_name:
             return
+            
+        # Ask for directionality
+        directional = QMessageBox.question(
+            self,
+            "Edge Direction",
+            "Should this edge be directional?",
+            QMessageBox.Yes | QMessageBox.No
+        ) == QMessageBox.Yes
 
         from_node = next(node for node in self.graph.nodes if node.name == node1_name)
         to_node = next(node for node in self.graph.nodes if node.name == node2_name)
@@ -160,7 +168,7 @@ class EditMenu(QWidget):
         edge_counter = self.graph.edge_counter
         while f"edge {edge_counter}" in [edge.name for edge in self.graph.edges]:
             edge_counter += 1
-        self.graph.add_edge(from_node, to_node, "edge " + str(edge_counter), True)
+        self.graph.add_edge(from_node, to_node, "edge " + str(edge_counter), directional)
         self.graph.edge_counter += 1
         self.updateSelectionMenu()
     
@@ -182,7 +190,7 @@ class EditMenu(QWidget):
         self.selectNode.blockSignals(True)
         self.selectEdge.blockSignals(True)
         self.name_edit.blockSignals(True)
-    
+        
         self.selectNode.clear()
         self.selectEdge.clear()
         
@@ -193,32 +201,33 @@ class EditMenu(QWidget):
         self.selectEdge.addItem("None")
         for edge in self.graph.edges:
             self.selectEdge.addItem(edge.name)
-        
-        # Reset both selections
-        self.selectNode.setCurrentText("None")
-        self.selectEdge.setCurrentText("None")
-        self.selected_item = None
-        
+            
         # Update based on current selection
-        if self.graph.nodes.selected and isinstance(self.graph.nodes.selected, Node):
-            self.selectNode.setCurrentText(self.graph.nodes.selected.name)
-            self.show_node_controls()
-            self.name_edit.setText(self.graph.nodes.selected.name)
-            self.selected_item = self.graph.nodes.selected
-        elif self.graph.selected and isinstance(self.graph.selected, Edge):
+        if self.graph.selected and isinstance(self.graph.selected, Edge):
+            self.selectNode.setCurrentText("None")
             self.selectEdge.setCurrentText(self.graph.selected.name)
             self.show_edge_controls()
             self.name_edit.setText(self.graph.selected.name)
             self.selected_item = self.graph.selected
+            self.toggleDirectionalCheckbox.setChecked(self.graph.selected.directional)
+        elif self.graph.nodes.selected and isinstance(self.graph.nodes.selected, Node):
+            self.selectEdge.setCurrentText("None")
+            self.selectNode.setCurrentText(self.graph.nodes.selected.name)
+            self.show_node_controls()
+            self.name_edit.setText(self.graph.nodes.selected.name)
+            self.selected_item = self.graph.nodes.selected
         else:
+            self.selectNode.setCurrentText("None")
+            self.selectEdge.setCurrentText("None")
             self.show_node_controls()  # Default to node controls
             self.name_edit.clear()
-        
+            self.selected_item = None
+            
         # Re-enable signals
         self.selectNode.blockSignals(False)
         self.selectEdge.blockSignals(False)
         self.name_edit.blockSignals(False)
-        
+
     def onNodeSelection(self, text):
         # Block all signals during selection change
         self.name_edit.blockSignals(True)
@@ -344,9 +353,13 @@ class EditMenu(QWidget):
             
     def updateDirectional(self, value):
         if self.selected_item and isinstance(self.selected_item, Edge):
-            self.selected_item.directional = value
-            self.selected_item.viewModel.update()
-            self.update_item()
+            # Ensure we're updating the correct edge by checking identity
+            for edge in self.graph.edges:
+                if edge is self.selected_item:  # Check object identity
+                    edge.directional = value == Qt.Checked
+                    edge.viewModel.update()
+                    self.update_item()
+                    break
 
     def update_item(self):
         # Redraw the graph after any change

@@ -139,19 +139,33 @@ class EdgeViewModel(QGraphicsItem):
         painter.drawPolygon(arrow_head)
         
     def mouseDoubleClickEvent(self, event):
-        # Clear any selected edge from the graph
         if hasattr(self.selectionList, 'graph'):
-            self.selectionList.graph.selected = None  # Always ensure edge is deselected
-                
-        if self.selected:
-            self.selectionList.setSelected(None)
-            self.selected = False
-        else:
-            self.selectionList.setSelected(self.__edge)
+            graph = self.selectionList.graph
+            
+            # If this edge is already selected, deselect it
+            if graph.selected == self.__edge:
+                self.selected = False
+                graph.selected = None
+                self.update()
+                graph.SelectionChanged.trigger()
+                return super().mouseDoubleClickEvent(event)
+            
+            # Clear node selection first
+            graph.nodes.setSelected(None)
+            
+            # Clear any previous edge selection
+            if graph.selected:
+                graph.selected.viewModel.selected = False
+                graph.selected.viewModel.update()
+            
+            # Set new edge selection
             self.selected = True
+            graph.selected = self.__edge
+            self.update()
+            
+            graph.SelectionChanged.trigger()
         
-        self.update()
-        return super().mouseDoubleClickEvent(event)
+        super().mouseDoubleClickEvent(event)
 
     
     def onDelete(self):

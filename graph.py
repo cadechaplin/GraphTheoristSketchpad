@@ -13,6 +13,7 @@ class GraphWidget(QGraphicsView):
     def __init__(self):
         super().__init__()
         self.nodes = selectionManager()
+        self.nodes.graph = self  # Add reference to self in nodes manager
         self.SelectionChanged = Event()
         self.nodes.onSelectionChanged.update.append(self.SelectionChanged.trigger)
         self.edges = []
@@ -96,7 +97,7 @@ class GraphWidget(QGraphicsView):
         viewModel = EdgeViewModel(edge, self.nodes)
         edge.viewModel = viewModel
         self.scene.addItem(viewModel)
-        edge.directional = directional
+        edge.directional = directional # Set the directionality
         self.edges.append(edge)
         self.edge_count += 1
         self.update_counters()

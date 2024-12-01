@@ -76,10 +76,15 @@ class NodeViewModel(QGraphicsItem):
         super(NodeViewModel, self).mouseReleaseEvent(event)
         
     def mouseDoubleClickEvent(self, event):
-        # Clear any selected edge from the graph
+        # First properly handle edge deselection
         if hasattr(self.selectionList, 'graph'):
-            self.selectionList.graph.selected = None  # Always ensure edge is deselected
+            if self.selectionList.graph.selected:
+                old_edge = self.selectionList.graph.selected
+                old_edge.viewModel.selected = False
+                old_edge.viewModel.update()
+                self.selectionList.graph.selected = None
                 
+        # Then handle node selection/deselection
         if self.selected:
             self.selectionList.setSelected(None)
             self.selected = False
@@ -88,7 +93,7 @@ class NodeViewModel(QGraphicsItem):
             self.selected = True
         
         self.update()
-        return super().mouseDoubleClickEvent(event)
+        super().mouseDoubleClickEvent(event)
 
     def hoverEnterEvent(self, event):
         self.hovering = True
@@ -118,4 +123,3 @@ class NodeViewModel(QGraphicsItem):
         if scene:
             scene.removeItem(self)
             scene.update()
-    
