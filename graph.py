@@ -82,15 +82,33 @@ class GraphWidget(QGraphicsView):
         self.update()
         return node
         
+    def get_next_available_edge_index(self):
+        existing_indices = set()
+        for edge in self.edges:
+            if edge.name.startswith('edge '):
+                try:
+                    index = int(edge.name[5:])  # Skip "edge " prefix
+                    existing_indices.add(index)
+                except ValueError:
+                    print("Value Error!")
         
+        # Find first available index
+        index = 1
+        while index in existing_indices:
+            index += 1
+        return index
         
     def add_edge(self, from_node, to_node, name, directional=False):
+        # Always use next available index for edge names, regardless of provided name
+        next_index = self.get_next_available_edge_index()
+        name = f"edge {next_index}"
+        
         # Count edges in both directions, ignoring direction
         existing_edge_count = sum(1 for edge in self.edges 
-                                if (edge.from_node == from_node and edge.to_node == to_node) or  # Forward edges
-                                (edge.from_node == to_node and edge.to_node == from_node) or  # Backward edges
-                                (edge.from_node == from_node and edge.to_node == from_node) or  # Self-loops from source
-                                (edge.from_node == to_node and edge.to_node == to_node))  # Self-loops from target
+                                if (edge.from_node == from_node and edge.to_node == to_node) or
+                                (edge.from_node == to_node and edge.to_node == from_node) or
+                                (edge.from_node == from_node and edge.to_node == from_node) or
+                                (edge.from_node == to_node and edge.to_node == to_node))
         
         edge = Edge(from_node, to_node, existing_edge_count + 1, name)
         edge.onChange.update.append(self.update)
@@ -102,6 +120,7 @@ class GraphWidget(QGraphicsView):
         self.edge_count += 1
         self.update_counters()
         self.onStructureChanged.trigger()
+        self.SelectionChanged.trigger()
         self.update()
     
     '''

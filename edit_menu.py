@@ -165,13 +165,11 @@ class EditMenu(QWidget):
         from_node = next(node for node in self.graph.nodes if node.name == node1_name)
         to_node = next(node for node in self.graph.nodes if node.name == node2_name)
         
-        edge_counter = self.graph.edge_counter
-        while f"edge {edge_counter}" in [edge.name for edge in self.graph.edges]:
-            edge_counter += 1
-        self.graph.add_edge(from_node, to_node, "edge " + str(edge_counter), directional)
-        self.graph.edge_counter += 1
+        # Use the graph's next available edge index instead of the counter
+        next_index = self.graph.get_next_available_edge_index()
+        self.graph.add_edge(from_node, to_node, f"edge {next_index}", directional)
         self.updateSelectionMenu()
-    
+
     def choose_color(self):
         if self.selected_item:
             color = QColorDialog.getColor()
@@ -194,14 +192,21 @@ class EditMenu(QWidget):
         self.selectNode.clear()
         self.selectEdge.clear()
         
-        # Add items to selection menus
+        # Add items to selection menus with None option first
         self.selectNode.addItem("None")
+        self.selectEdge.addItem("None")
+        
+        # Add all nodes
         for node in self.graph.nodes:
             self.selectNode.addItem(node.name)
-        self.selectEdge.addItem("None")
+        
+        # Add all edges, ensuring we capture every edge in the graph
+        edge_names = []
         for edge in self.graph.edges:
-            self.selectEdge.addItem(edge.name)
-            
+            if edge.name not in edge_names:  # Prevent duplicate entries
+                self.selectEdge.addItem(edge.name)
+                edge_names.append(edge.name)
+        
         # Update based on current selection
         if self.graph.selected and isinstance(self.graph.selected, Edge):
             self.selectNode.setCurrentText("None")

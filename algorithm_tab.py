@@ -49,11 +49,6 @@ class AlgorithmTab(QWidget):
         cols = self.cols_spin.value()
         spacing = 100
         
-        # Only clear existing edges, preserve nodes
-        self.graph.edges.clear()
-        self.graph.edge_count = 0  # Reset edge count
-        self.graph.update_counters()
-        
         # Create nodes
         nodes = {}  # Using dictionary to store node references
         for i in range(rows):
@@ -71,11 +66,11 @@ class AlgorithmTab(QWidget):
             # Horizontal edges
             if (i + 1) % grid_width != 0:  # If not last in row
                 next_name = node_names[i + 1]
-                self.graph.add_edge(nodes[current_name], nodes[next_name], f"edge {len(self.graph.edges)}")
+                self.graph.add_edge(nodes[current_name], nodes[next_name], "edge 0", False)  # Use "edge 0" as placeholder
             # Vertical edges
             if i + grid_width < len(node_names):  # If not in last row
                 below_name = node_names[i + grid_width]
-                self.graph.add_edge(nodes[current_name], nodes[below_name], f"edge {len(self.graph.edges)}")
+                self.graph.add_edge(nodes[current_name], nodes[below_name], "edge 0", False)  # Use "edge 0" as placeholder
 
     def create_cycle(self):
         if not self.graph:
@@ -84,11 +79,6 @@ class AlgorithmTab(QWidget):
         n = self.vertices_spin.value()
         radius = 200
         center = QPointF(0, 0)
-        
-        # Only clear existing edges, preserve nodes
-        self.graph.edges.clear()
-        self.graph.edge_count = 0  # Reset edge count
-        self.graph.update_counters()
         
         # Create nodes in a circle
         nodes = {}  # Using dictionary to store node references
@@ -106,4 +96,4 @@ class AlgorithmTab(QWidget):
         for i in range(len(node_names)):
             current_name = node_names[i]
             next_name = node_names[(i + 1) % n]
-            self.graph.add_edge(nodes[current_name], nodes[next_name], f"edge {i}")
+            self.graph.add_edge(nodes[current_name], nodes[next_name], "edge 0", False)  # Use "edge 0" as placeholder
