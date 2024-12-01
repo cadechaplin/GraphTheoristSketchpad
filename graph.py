@@ -1,5 +1,3 @@
-
-
 import math
 from PyQt5.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGraphicsItem, QGraphicsTextItem
 from PyQt5.QtCore import Qt, QPoint
@@ -47,6 +45,7 @@ class GraphWidget(QGraphicsView):
         self.update_counters()
 
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        self.onStructureChanged = Event()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -78,7 +77,9 @@ class GraphWidget(QGraphicsView):
         self.scene.addItem(viewModel)
         self.node_count += 1
         self.update_counters()
+        self.onStructureChanged.trigger()
         self.update()
+        return node
         
         
         
@@ -99,10 +100,10 @@ class GraphWidget(QGraphicsView):
         self.edges.append(edge)
         self.edge_count += 1
         self.update_counters()
+        self.onStructureChanged.trigger()
         self.update()
     
     '''
-    
     def deleteSelected(self):
         if self.selected:
             if isinstance(self.selected, Node):
@@ -117,20 +118,61 @@ class GraphWidget(QGraphicsView):
             self.selected = None
             
             self.update()
-        
-
-
-    
-
-
-     
-   
-    
-    
-    
     '''
     
-    
-
-    
+    def removeItem(self, item):
+        if isinstance(item, Node):
+            # First deselect if this is the selected node
+            if self.nodes.selected == item:
+                self.nodes.setSelected(None)
             
+            # Remove all connected edges first
+            edges_to_remove = [edge for edge in self.edges[:] 
+                             if edge.from_node == item or edge.to_node == item]
+            for edge in edges_to_remove:
+                # Clear edge selection if this edge was selected
+                if self.selected == edge:
+                    self.selected = None
+                # Remove edge view and trigger cleanup
+                if edge.viewModel:
+                    edge.viewModel.selected = False
+                    self.scene.removeItem(edge.viewModel)
+                self.edges.remove(edge)
+                edge.onDelete.trigger()
+            
+            # Then remove the node
+            if item.viewModel:
+                self.scene.removeItem(item.viewModel)
+            self.nodes.remove(item)
+        else:  # Edge case
+            # Clear edge selection if this edge was selected
+            if self.selected == item:
+                self.selected = None
+            if item.viewModel:
+                item.viewModel.selected = False
+                self.scene.removeItem(item.viewModel)
+            self.edges.remove(item)
+            
+        item.onDelete.trigger()
+        self.onStructureChanged.trigger()
+
+    def get_next_available_node_index(self):
+        existing_indices = set()
+        for node in self.nodes:
+            if node.name.startswith('v'):
+                try:
+                    index = int(node.name[1:])
+                    existing_indices.add(index)
+                except ValueError:
+                    print("Value Error!")
+        
+        # Find first available index
+        index = 0
+        while index in existing_indices:
+            index += 1
+        return index
+
+
+
+
+

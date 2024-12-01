@@ -2,13 +2,12 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QLineEdit
 from PyQt5.QtCore import Qt, QPoint
 from node import Node
 from edge import Edge
+from matrix_tab import MatrixTab
+from algorithm_tab import AlgorithmTab
 
 
 
 class EditMenu(QWidget):
-        
-
-
     def __init__(self):
         super().__init__()
         self.graph = None
@@ -19,8 +18,6 @@ class EditMenu(QWidget):
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
         
-
-
         # Create a QWidget for the Controls tab
         controls_widget = QWidget()
         self.controls_layout = QVBoxLayout()
@@ -94,6 +91,15 @@ class EditMenu(QWidget):
         # Add the controls widget as a tab
         self.tabs.addTab(controls_widget, "Controls")
 
+        # Create Matrix and Algorithm tabs
+        self.matrix_tab = MatrixTab()
+        self.algorithm_tab = AlgorithmTab()
+        
+        # Add all tabs
+        self.tabs.addTab(controls_widget, "Controls")
+        self.tabs.addTab(self.matrix_tab, "Matrices")
+        self.tabs.addTab(self.algorithm_tab, "Algorithms")
+
         # Connect signals
         self.color_button.clicked.connect(self.choose_color)
         self.name_edit_accept_button.clicked.connect(self.update_name)
@@ -108,35 +114,27 @@ class EditMenu(QWidget):
         # Variable to store the currently selected item
         self.selected_item = None
         
-        #example for adding new tab
-        new_tab_widget = QWidget()
-        new_tab_layout = QVBoxLayout()
-        new_tab_widget.setLayout(new_tab_layout)
-        # Add widgets to new_tab_layout as needed
-        self.tabs.addTab(new_tab_widget, "New Tab")
-        
     def bind_graph(self, graph):
         self.graph = graph
         graph.SelectionChanged.update.append(self.updateSelectionMenu)
-        graph.nodes.onSelectionChanged.update.append(self.updateSelectionMenu)  # Handle node selection change
+        graph.nodes.onSelectionChanged.update.append(self.updateSelectionMenu)
+        self.matrix_tab.bind_graph(self.graph)
+        self.algorithm_tab.bind_graph(graph)
 
     def add_node(self):
-        name = f"v{self.graph.node_counter}"
-        node_count = self.graph.node_counter
-        while name in [node.name for node in self.graph.nodes]:
-            node_count += 1
-            name = f"v{node_count}"
-        self.graph.node_counter += 1
+        index = self.graph.get_next_available_node_index()
+        name = f"v{index}"
+        
         # Get viewport center
         viewport_center = self.graph.viewport().rect().center()
         
-        # Calculate offset from center (spiral or grid pattern)
-        x_offset = (self.graph.node_counter - 1) * 100  # Increased spacing
-        y_offset = 0  # Can modify for different patterns
+        # Calculate offset from center - special case for first node
+        x_offset = 0 if len(self.graph.nodes) == 0 else len(self.graph.nodes) * 100
+        y_offset = 0
         
         # Convert to scene coordinates
         scene_pos = self.graph.mapToScene(
-            viewport_center.x() + x_offset - 200,  # Subtract offset to start more to the left
+            viewport_center.x() + x_offset - (0 if len(self.graph.nodes) == 0 else 200),
             viewport_center.y() + y_offset
         )
         
@@ -175,7 +173,7 @@ class EditMenu(QWidget):
                     self.selected_item.viewModel.dColor = color
                     self.selected_item.viewModel.hoverColor = color.lighter(125)
                 elif isinstance(self.selected_item, Edge):
-                    # Edge color handling if needed
+                    # Edge color handling TBD
                     pass
                 self.update_item()
     
@@ -291,34 +289,31 @@ class EditMenu(QWidget):
         self.graph.update()
         
     def delete(self):
-        #self.graph.deleteSelected()
         if self.selected_item:
             if isinstance(self.selected_item, Node):
-                self.removeItem(self.selected_item)
-                self.graph.node_count -= 1
-                removeList = []
-                for item in self.graph.edges:
-                    if item.from_node == self.selected_item or item.to_node == self.selected_item:
-                        removeList.append(item)
-                for item in removeList:
+                # Find all connected edges first
+                edges_to_remove = [edge for edge in self.graph.edges 
+                                 if edge.from_node == self.selected_item 
+                                 or edge.to_node == self.selected_item]
+                
+                # Remove edges first
+                for edge in edges_to_remove:
                     self.graph.edge_count -= 1
-                    self.removeItem(item)     
+                    self.graph.removeItem(edge)
+                    
+                # Then remove the node
+                self.graph.removeItem(self.selected_item)
+                self.graph.node_count -= 1
+                
             elif isinstance(self.selected_item, Edge):
                 self.graph.edge_count -= 1
-                self.removeItem(self.selected_item)
+                self.graph.removeItem(self.selected_item)
+                
             self.selected_item = None
-            self.update_item()
+            self.graph.update_counters()
             self.updateSelectionMenu()
-        self.graph.update_counters()
-        self.update()
-        return
-    def removeItem(self,item):
-        if isinstance(item, Node):
-            self.graph.nodes.remove(item)
-        else:
-            self.graph.edges.remove(item)
-        item.onDelete.trigger()
-    
+            self.graph.update()
+
     def update_name(self):                
         if self.selected_item:
             text = self.name_edit.text()
