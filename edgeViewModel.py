@@ -30,8 +30,8 @@ class EdgeViewModel(QGraphicsItem):
             count = self.__edge.getCount() - 1  # Adjust for multiple self-loops
             
             # Make radius much larger so loop extends beyond node
-            radius = node_size * (3 + 0.8 * count)  # Increased multiplier from 1.5 to 3
-            base_angle = math.pi/6 + (math.pi/8 * count)  # 30 degrees + offset for each loop
+            radius = node_size * (3 + 0.8 *  1.5 * count)  # Increased multiplier from 1.5 to 3
+            base_angle = math.pi/6 + (math.pi/8 )  # 30 degrees + offset for each loop
             
             # Calculate start and end points on node circumference
             start_point = QPointF(
@@ -45,12 +45,12 @@ class EdgeViewModel(QGraphicsItem):
             
             # Calculate control points for smooth curve with larger radius
             control1 = QPointF(
-                start_point.x() - radius * math.cos(-base_angle - math.pi/6),
-                start_point.y() - radius * math.sin(-base_angle - math.pi/6)
+                start_point.x() + radius * math.cos(-base_angle - math.pi/6),
+                start_point.y() + radius * math.sin(-base_angle - math.pi/6)
             )
             control2 = QPointF(
-                end_point.x() - radius * math.cos(base_angle + math.pi/6),
-                end_point.y() - radius * math.sin(base_angle + math.pi/6)
+                end_point.x() + radius * math.cos(base_angle + math.pi/6),
+                end_point.y() + radius * math.sin(base_angle + math.pi/6)
             )
             
             path.moveTo(start_point)
