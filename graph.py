@@ -140,42 +140,41 @@ class GraphWidget(QGraphicsView):
             self.update()
     '''
     
+
     def removeItem(self, item):
         if isinstance(item, Node):
-            # First deselect if this is the selected node
+            # Deselect the node if it's selected
             if self.nodes.selected == item:
                 self.nodes.setSelected(None)
             
-            # Remove all connected edges first
+            # Remove connected edges
             edges_to_remove = [edge for edge in self.edges[:] 
-                             if edge.from_node == item or edge.to_node == item]
+                               if edge.from_node == item or edge.to_node == item]
             for edge in edges_to_remove:
-                # Clear edge selection if this edge was selected
-                if self.selected == edge:
-                    self.selected = None
-                # Remove edge view and trigger cleanup
-                if edge.viewModel:
-                    edge.viewModel.selected = False
-                    self.scene.removeItem(edge.viewModel)
-                self.edges.remove(edge)
-                edge.onDelete.trigger()
+                self.removeItem(edge)  # Recursive call to handle edge removal
             
-            # Then remove the node
+            # Remove the node
             if item.viewModel:
                 self.scene.removeItem(item.viewModel)
             self.nodes.remove(item)
-        else:  # Edge case
-            # Clear edge selection if this edge was selected
+            self.node_count -= 1  # Decrement node count
+            
+        elif isinstance(item, Edge):
+            # Deselect the edge if it's selected
             if self.selected == item:
                 self.selected = None
             if item.viewModel:
                 item.viewModel.selected = False
                 self.scene.removeItem(item.viewModel)
             self.edges.remove(item)
-            
-        item.onDelete.trigger()
+            item.onDelete.trigger()
+            self.edge_count -= 1  # Decrement edge count
+        
+        # Update counters and UI
+        self.update_counters()
         self.onStructureChanged.trigger()
-
+        self.update()
+        
     def get_next_available_node_index(self):
         existing_indices = set()
         for node in self.nodes:

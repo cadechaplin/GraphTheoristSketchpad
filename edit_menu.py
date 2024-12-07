@@ -304,30 +304,10 @@ class EditMenu(QWidget):
         
     def delete(self):
         if self.selected_item:
-            if isinstance(self.selected_item, Node):
-                # Find all connected edges first
-                edges_to_remove = [edge for edge in self.graph.edges 
-                                 if edge.from_node == self.selected_item 
-                                 or edge.to_node == self.selected_item]
-                
-                # Remove edges first
-                for edge in edges_to_remove:
-                    self.graph.edge_count -= 1
-                    self.graph.removeItem(edge)
-                    
-                # Then remove the node
-                self.graph.removeItem(self.selected_item)
-                self.graph.node_count -= 1
-                
-            elif isinstance(self.selected_item, Edge):
-                self.graph.edge_count -= 1
-                self.graph.removeItem(self.selected_item)
-                
+            self.graph.removeItem(self.selected_item)
             self.selected_item = None
-            self.graph.update_counters()
             self.updateSelectionMenu()
-            self.graph.update()
-
+            
     def update_name(self):                
         if self.selected_item:
             text = self.name_edit.text()
